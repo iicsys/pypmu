@@ -1,4 +1,4 @@
-# Python Synchrophasor Module #
+# pyPMU - Python Synchrophasor Module #
 
 Synchrophasor module represents implementation of IEEE C37.118.2
 standard in Python. `synchrophasor` module is still in development phase

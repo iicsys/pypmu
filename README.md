@@ -36,19 +36,22 @@ Add `synchrophasor` folder to `PYTHONPATH`:
     For Ubuntu preferred option<sup>1</sup>:
     
     `
-    echo export PYTHONPATH="${PYTHONPATH}:/path_to/pypmu/synchrophasor" >> ~/.profile && source ~/.profile
+    echo export PYTHONPATH="${PYTHONPATH}:/path_to/pypmu/synchrophasor" >> ~/.profile && 
+    source ~/.profile
     `
     
     For Mac OS X preferred option<sup>2</sup>:  
       
     `
-    echo export PYTHONPATH="${PYTHONPATH}:/path/to/pypmu/synchrophasor" >> ~/.bash_profile && source ~/.bash_profile
+    echo export PYTHONPATH="${PYTHONPATH}:/path/to/pypmu/synchrophasor" >> ~/.bash_profile && 
+    source ~/.bash_profile
     `
     
     Or you can add it each time you run per-interactive-shell<sup>3</sup>:
     
     `
-    echo export PYTHONPATH="${PYTHONPATH}:/path_to/pypmu/synchrophasor" >> ~/.bashrc && source ~/.bashrc
+    echo export PYTHONPATH="${PYTHONPATH}:/path_to/pypmu/synchrophasor" >> ~/.bashrc 
+    && source ~/.bashrc
     `
     
 * If you're using Windows switch to GNU/Linux and check previous
@@ -64,20 +67,20 @@ for you.
 - <sup>1</sup>(./profile) 
 
     `
-    # ~/.profile: executed by the command interpreter for login shells.
+    ~/.profile: executed by the command interpreter for login shells.
     This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login exists.
     `
     
 - <sup>2</sup>(./bash_profile)
 
     `
-    # ~/.bash_profile: The personal initialization file, executed for login shells
+    ~/.bash_profile: The personal initialization file, executed for login shells
     `
     
 -  <sup>3</sup>(~/.bashrc)
 
     `
-    # ~/.bashrc: The individual per-interactive-shell startup file
+    ~/.bashrc: The individual per-interactive-shell startup file
     `
 
 ### Running the tests ###

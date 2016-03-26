@@ -125,14 +125,14 @@ class Pmu(object):
             # Close the connection fd in the parent, since the child process has its own reference.
             conn.close()
 
-    def __init__(self, pmu_id=7734, data_rate=30, port=4712, ip='127.0.0.1', method='tcp'):
+    def __init__(self, pmu_id=7734, data_rate=30, port=4712, ip='127.0.0.1', method='tcp', buffer_size=2048):
 
         self.port = port
         self.ip = ip
 
         self.socket = None
         self.listener = None
-        self.buffer_size = 2048
+        self.buffer_size = buffer_size
 
         self.ieee_cfg2_sample = ConfigFrame2(7734, 1000000, 1, "Station A", 7734, (False, False, True, False), 4, 3, 1,
                                              ["VA", "VB", "VC", "I1", "ANALOG1", "ANALOG2", "ANALOG3",

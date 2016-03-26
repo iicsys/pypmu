@@ -229,7 +229,7 @@ class StreamSplitter(object):
             self.logger.info("[%s] - Closing source socket at %s:%d", self.name, self.source_ip, self.source_port)
             sock.close()
 
-    def __init__(self, source_ip, source_port, listen_ip, listen_port, pmu_id=1, method='tcp', buffer_size=2048):
+    def __init__(self, source_ip, source_port, listen_ip, listen_port, pdc_id=1, method='tcp', buffer_size=2048):
 
         self.socket = None
         self.listener = None
@@ -240,7 +240,7 @@ class StreamSplitter(object):
         self.listen_ip = listen_ip
         self.listen_port = listen_port
 
-        self.id = pmu_id
+        self.id = pdc_id
         self.method = method
         self.name = 'Splitter - (' + source_ip + ':' + str(source_port) + ')'
 

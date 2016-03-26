@@ -16,7 +16,10 @@ __credits__ = []
 __license__ = "GPL"
 __version__ = "1.0"
 
-argument_parser = ArgumentParser(description='pmy - PMU simulator, sending constant sample measurement.')
+argument_parser = ArgumentParser(description='pmy - PMU simulator, sending constant sample measurement. '
+                                             'Usage example: '
+                                             './pmy.py -i 511 -ip 127.0.0.1 -p 1995 -r 30')
+
 argument_parser.add_argument('-i', '--id', help='PMU ID code.', default=7734, type=int)
 argument_parser.add_argument('-ip', '--ip', help='Listener IP.', required=True)
 argument_parser.add_argument('-p', '--port', help='Listener port.', required=True, type=int)

@@ -31,9 +31,20 @@ Add `synchrophasor` folder to `PYTHONPATH`:
 
 
 * If you're using GNU/Linux or Mac OS X add `synchrophasor` folder 
-(located inside repo folder) to your `$PYTHONPATH` like this:
-
-`export PYTHONPATH="${PYTHONPATH}:/path_to/synchrophasor/synchrophasor" >> ~/.bashrc`
+(located inside repo folder) to your `$PYTHONPATH` like this: 
+     
+    For Ubuntu preferred option<sup>1</sup>:
+    `
+    echo export PYTHONPATH="${PYTHONPATH}:/path_to/pypmu/synchrophasor" >> ~/.profile && source ~/.profile
+    `
+    For Mac OS X preferred option<sup>2</sup>:    
+    `
+    echo export PYTHONPATH="${PYTHONPATH}:/path/to/pypmu/synchrophasor" >> ~/.bash_profile && source ~/.bash_profile
+    `  
+    Or you can add it each time you run per-interactive-shell<sup>3</sup>:   
+    `
+    echo export PYTHONPATH="${PYTHONPATH}:/path_to/pypmu/synchrophasor" >> ~/.bashrc && source ~/.bashrc
+    `
 
 * If you're using Windows switch to GNU/Linux and check previous
 solution or
@@ -42,6 +53,22 @@ solution or
 * If you've cloned repository using PyCharm - PyCharm will handle it 
 for you.
 
+
+**Note**
+
+- <sup>1</sup>(./profile) 
+    `
+    # ~/.profile: executed by the command interpreter for login shells.
+    This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login exists.
+    `
+- <sup>2</sup>(./bash_profile)
+    `
+    # ~/.bash_profile: The personal initialization file, executed for login shells
+    `
+-  <sup>3</sup>(~/.bashrc)
+    `
+    # ~/.bashrc: The individual per-interactive-shell startup file
+    `
 
 ### Running the tests ###
 
@@ -64,6 +91,21 @@ If ```AssertionError``` is **not** shown you're good to go!
 Inside examples folder you will find few useful examples that utilize
 `synchrophasor` module.
 
+### StreamSplitter ###
+
+Possible practical use of synchrophasor module would be data-stream
+splitter. In case you need to send phasor measurements to multiple
+destinations following 4 lines of code will do it:
+
+```
+from synchrophasor.splitter import StreamSplitter
+
+sp = StreamSplitter(source_ip='127.0.0.1', source_port=1410, listen_ip='127.0.0.1', listen_port=1502)
+sp.run()
+sp.join()
+```
+
+
 ### TinyPMU ###
 
 With only few lines of code you can bring up PMU simulator which will
@@ -73,7 +115,7 @@ send constant phasor measurements to connected PDCs.
 from synchrophasor.pmu import Pmu
 
 
-pmu = Pmu(port=1410, ip="127.0.0.1")
+pmu = Pmu(ip="127.0.0.1", port=1410)
 
 pmu.set_configuration()  # This will load default PMU configuration specified in IEEE C37.118.2 - Annex D (Table D.2)
 pmu.set_header()  # This will load default header message "Hello I'm tinyPMU!"
@@ -112,23 +154,40 @@ while True:
     if not data:
         pdc.quit()  # Close connection
         break
-
 ```
 
-### StreamSplitter ###
+## Applications ##
 
-Possible practical use of synchrophasor module would be data-stream
-splitter. In case you need to send phasor measurements to multiple
-destinations following 4 lines of code will do it:
+If you really don't want to know what is inside of these scripts we've 
+prepared applications for you inside `apps` folder.
 
-```
-from synchrophasor.splitter import StreamSplitter
+Make them executable like this:
 
-sp = StreamSplitter(source_ip='127.0.0.1', source_port=1410, listen_ip='127.0.0.1', listen_port=1502)
-sp.run()
-sp.join()
-```
+`chmod +x splytter.py`
 
+Then you can ask for help like this and you will find usage example
+there:
+
+`./splytter --help`
+
+### splytter ###
+
+If you don't want to bother writing your own script for stream splitter
+you can run `splytter` application like this:
+
+`
+./splytter.py -i 10 -sip 127.0.0.1 -sp 1410 -lip 127.0.0.1 -lp 9991'
+`
+
+### pmy ###
+
+If you need PMU simulator for network test or something like that you
+can run `pmy` application which will send constant data frames to all
+connected PDCs:
+
+`
+./pmy.py -i 511 -ip 127.0.0.1 -p 1995 -r 30'
+`
 ## We don't have it yet? :( ##
 
 Since `synchrophasor` module is in early development phase we're

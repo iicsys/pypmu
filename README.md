@@ -115,16 +115,16 @@ while True:
 
 ```
 
-### StreamSplytter ###
+### StreamSplitter ###
 
 Possible practical use of synchrophasor module would be data-stream
 splitter. In case you need to send phasor measurements to multiple
 destinations following 4 lines of code will do it:
 
 ```
-from synchrophasor.splitter import StreamSplytter
+from synchrophasor.splitter import StreamSplitter
 
-sp = StreamSplytter(source_ip='127.0.0.1', source_port=1410, listen_ip='127.0.0.1', listen_port=1502)
+sp = StreamSplitter(source_ip='127.0.0.1', source_port=1410, listen_ip='127.0.0.1', listen_port=1502)
 sp.run()
 sp.join()
 ```

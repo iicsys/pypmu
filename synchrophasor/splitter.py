@@ -15,7 +15,7 @@ __license__ = "GPL"
 __version__ = "1.0"
 
 
-class StreamSplytter(object):
+class StreamSplitter(object):
 
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
@@ -252,5 +252,5 @@ class StreamSplytter(object):
         self.client_buffers = []
 
 
-class StreamSplytterError(BaseException):
+class StreamSplitterError(BaseException):
     pass

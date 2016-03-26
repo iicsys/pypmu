@@ -7,7 +7,7 @@ measurements - fixed (sample) measurement will
 be sent.
 """
 
-pmu = Pmu(port=1410, ip="127.0.0.1")
+pmu = Pmu(ip="127.0.0.1", port=1410)
 
 pmu.set_configuration()  # This will load default PMU configuration specified in IEEE C37.118.2 - Annex D (Table D.2)
 pmu.set_header()  # This will load default header message "Hello I'm tinyPMU!"

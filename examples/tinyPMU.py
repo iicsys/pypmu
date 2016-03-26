@@ -1,5 +1,11 @@
 from synchrophasor.pmu import Pmu
 
+"""
+tinyPMU will listen on ip:port for incoming connections.
+When tinyPMU receives command to start sending
+measurements - fixed (sample) measurement will
+be sent.
+"""
 
 pmu = Pmu(port=1410, ip="127.0.0.1")
 

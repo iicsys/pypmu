@@ -98,7 +98,7 @@ class StreamSplitter(object):
             buffer = multiprocessing.Queue()
             self.client_buffers.append(buffer)
 
-            process_name = 'Client(' + str(address[0]) + ':' + str(address[1]) + ')'
+            process_name = 'PDC - (' + str(address[0]) + ':' + str(address[1]) + ')'
             process = multiprocessing.Process(name=process_name,
                                               target=self.stream_handler, args=(conn, address, buffer))
             # process.daemon = True
@@ -242,7 +242,7 @@ class StreamSplitter(object):
 
         self.id = pmu_id
         self.method = method
-        self.name = '|Splitter|(' + source_ip + ':' + str(source_port) + ')'
+        self.name = 'Splitter - (' + source_ip + ':' + str(source_port) + ')'
 
         self.source_cfg1 = None
         self.source_cfg2 = None

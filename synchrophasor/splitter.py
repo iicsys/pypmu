@@ -242,7 +242,7 @@ class StreamSplitter(object):
 
         self.id = pmu_id
         self.method = method
-        self.name = 'Splytter(' + source_ip + ':' + str(source_port) + ')'
+        self.name = '|Splitter|(' + source_ip + ':' + str(source_port) + ')'
 
         self.source_cfg1 = None
         self.source_cfg2 = None

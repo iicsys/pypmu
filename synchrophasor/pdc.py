@@ -126,7 +126,7 @@ class Pdc(object):
             except FrameError:
                 received_message = None
                 self.logger.warning("[%d] - Received unknown message from PMU (%s:%d)",
-                                    self.pdc_id, self.pmu_ip, self.pmu_socket)
+                                    self.pdc_id, self.pmu_ip, self.pmu_port)
 
         return received_message
 

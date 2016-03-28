@@ -2,7 +2,6 @@ import multiprocessing
 import threading
 import socket
 import logging
-import binascii
 
 from synchrophasor.frame import *
 from sys import stdout
@@ -70,7 +69,7 @@ class Pmu(object):
                 elif command == 'stop':
                     self.logger.info("[%d] - Stop sending -> (%s:%d)", self.pmu_id, address[0], address[1])
                     sending_measurements_enabled = False
-                    # break
+
                 elif command == 'header':
                     connection.sendall(self.header.convert2bytes())
                     self.logger.info("[%d] - Requested Header frame sent -> (%s:%d)",

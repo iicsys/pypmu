@@ -1534,8 +1534,8 @@ class DataFrame(CommonFrame):
                 if not -3.15 < phasor[1] < 3.15:
                     raise ValueError("Angle in radians must be between -3.14 and +3.14.")
 
-                mg = pack('<f', float(phasor[0]))
-                an = pack('<f', float(phasor[1]))
+                mg = pack('!f', float(phasor[0]))
+                an = pack('!f', float(phasor[1]))
                 measurement = mg + an
 
                 return int.from_bytes(measurement, 'big', signed=False)
@@ -1556,8 +1556,8 @@ class DataFrame(CommonFrame):
             if (data_format & 2) != 0:
 
                 # Rectangular floating point representation
-                re = pack('<f', float(phasor[0]))
-                im = pack('<f', float(phasor[1]))
+                re = pack('!f', float(phasor[0]))
+                im = pack('!f', float(phasor[1]))
                 measurement = re + im
 
                 return int.from_bytes(measurement, 'big', signed=False)
@@ -1593,7 +1593,7 @@ class DataFrame(CommonFrame):
 
         # Check if third bit in data_format is 1 -> floating point representation
         if (data_format & 8) != 0:
-            return unpack('!I', pack('<f', float(freq)))[0]
+            return unpack('!I', pack('!f', float(freq)))[0]
         else:
             if not -32767 <= freq <= 32767:
                 raise ValueError("FREQ must be 16-bit signed integer. -32767 <= FREQ <= 32767.")
@@ -1622,7 +1622,7 @@ class DataFrame(CommonFrame):
 
         # Check if third bit in data_format is 1 -> floating point representation
         if (data_format & 8) != 0:
-            return unpack('!I', pack('<f', float(dfreq)))[0]
+            return unpack('!I', pack('!f', float(dfreq)))[0]
         else:
             if not -32767 <= dfreq <= 32767:
                 raise ValueError("DFREQ must be 16-bit signed integer. -32767 <= FREQ <= 32767.")
@@ -1659,7 +1659,7 @@ class DataFrame(CommonFrame):
 
         # Check if third bit in data_format is 1 -> floating point representation
         if (data_format & 4) != 0:
-            return unpack('I', pack('<f', float(analog)))[0]
+            return unpack('!I', pack('!f', float(analog)))[0]
         else:
             # User defined ranges - but fit in 16-bit (u)signed integer
             if not -32767 <= analog <= 65535:

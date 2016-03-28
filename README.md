@@ -206,6 +206,7 @@ connected PDCs:
 Since `synchrophasor` module is in early development phase we're
 missing few very important things.
 
+* We're working on Windows fix to support multiprocessing.
 * We don't have Configuration Frame version 1 and version 3 implemented
 but Configuration Frame version 2 is working just fine.
 * We don't have `convert2frame()` methods for converting raw bytes

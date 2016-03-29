@@ -40,8 +40,8 @@ header = pdc.get_header()  # Get header message from PMU
 config = pdc.get_config()  # Get configuration from PMU
 
 # Create result folder
-if not os.path.exists('results/'+arguments.data_rate):
-    os.makedirs('results'+arguments.data_rate)
+if not os.path.exists('results/'+ str(arguments.data_rate)):
+    os.makedirs('results/'+ str(arguments.data_rate))
 
 log = "./results/{:d}/result_j{:d}_id_{:d}_{:s}.log".format(arguments.data_rate, arguments.jobs, arguments.id, timestamp)
 

@@ -47,25 +47,26 @@ log = "./results/{:d}/result_j{:d}_id_{:d}_{:s}.log".format(arguments.data_rate,
 
 pdc.start()  # Request to start sending measurements
 start_time = stop_time = time.time()
+
 while measurements2receive > 0:
     try:
         data = pdc.get()  # Keep receiving data
-
-        if measurements2receive == 1:
-            stop_time = time.time()
-
-        if not data:
-            pdc.quit()  # Close connection
-            break
-
-        measurements2receive -= 1
     except:
         print("Whooa! Something went wrong!")
         errors += 1
 
+    if measurements2receive == 1:
+        stop_time = time.time()
+
+    if not data:
+        print("Wait! Wait! Where is the data?")
+        errors += 1
+
+    measurements2receive -= 1
+
 # Write results to file:
 with open(log, 'w') as log_file:
     log_file.write("PDC ID: {:d}\n".format(arguments.id))
-    log_file.write("PMU: {:s}:{:d}", arguments.ip, arguments.port)
+    log_file.write("PMU: {:s}:{:d}\n".format(arguments.ip, arguments.port))
     log_file.write("Result: {0:.4f}\n".format(stop_time-start_time))
     log_file.write("Errors: {:d}\n".format(errors))

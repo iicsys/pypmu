@@ -22,10 +22,11 @@ class Pdc(object):
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
-    def __init__(self, pdc_id=1, pmu_ip='127.0.0.1', pmu_port=4712, buffer_size=2048):
+    def __init__(self, pdc_id=1, pmu_ip='127.0.0.1', pmu_port=4712, buffer_size=2048, method='tcp'):
 
         self.pdc_id = pdc_id
         self.buffer_size = buffer_size
+        self.method = method
 
         self.pmu_ip = pmu_ip
         self.pmu_port = pmu_port

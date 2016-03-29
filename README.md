@@ -36,21 +36,21 @@ Add `synchrophasor` folder to `PYTHONPATH`:
     For Ubuntu preferred option<sup>1</sup>:
     
     `
-    echo export PYTHONPATH="${PYTHONPATH}:/path/to/pypmu/synchrophasor" >> ~/.profile && 
+    echo export PYTHONPATH="${PYTHONPATH}:/path/to/to/pypmu" >> ~/.profile && 
     source ~/.profile
     `
     
     For Mac OS X preferred option<sup>2</sup>:  
       
     `
-    echo export PYTHONPATH="${PYTHONPATH}:/path/pypmu/synchrophasor" >> ~/.bash_profile && 
+    echo export PYTHONPATH="${PYTHONPATH}:/path/to/pypmu" >> ~/.bash_profile && 
     source ~/.bash_profile
     `
     
     Or you can add it each time you run per-interactive-shell<sup>3</sup>:
     
     `
-    echo export PYTHONPATH="${PYTHONPATH}:/path/to/pypmu/synchrophasor" >> ~/.bashrc 
+    echo export PYTHONPATH="${PYTHONPATH}:/path/to/pypmu" >> ~/.bashrc 
     && source ~/.bashrc
     `
     

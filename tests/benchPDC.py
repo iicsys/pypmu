@@ -24,7 +24,7 @@ arguments = argument_parser.parse_args()
 
 # Receive ideal number of measurements in 60s.
 measurements2receive = 60 * arguments.data_rate
-timestamp = datetime.now().strftime('%Y%m%d_%H:%M:%S')
+timestamp = datetime.now().strftime('%Y%m%d_%H-%M-%S')
 errors = 0
 
 print("Running PDC(s) on {:d} separate thread(s) waiting for {:d}  measurements with expected"
@@ -40,10 +40,10 @@ header = pdc.get_header()  # Get header message from PMU
 config = pdc.get_config()  # Get configuration from PMU
 
 # Create result folder
-if not os.path.exists('results'):
-    os.makedirs('results')
+if not os.path.exists('results/'+arguments.data_rate):
+    os.makedirs('results'+arguments.data_rate)
 
-log = "./results/result_{:d}_{:d}_{:d}_{:s}.log".format(arguments.data_rate, arguments.jobs, arguments.id, timestamp)
+log = "./results/{:d}/result_j{:d}_id_{:d}_{:s}.log".format(arguments.data_rate, arguments.jobs, arguments.id, timestamp)
 
 pdc.start()  # Request to start sending measurements
 start_time = stop_time = time.time()
@@ -66,5 +66,6 @@ while measurements2receive > 0:
 # Write results to file:
 with open(log, 'w') as log_file:
     log_file.write("PDC ID: {:d}\n".format(arguments.id))
+    log_file.write("PMU: {:s}:{:d}", arguments.ip, arguments.port)
     log_file.write("Result: {0:.4f}\n".format(stop_time-start_time))
     log_file.write("Errors: {:d}\n".format(errors))

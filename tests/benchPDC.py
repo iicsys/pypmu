@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 import time
-import datetime
 import os
 
 from synchrophasor.pdc import Pdc
 from synchrophasor.frame import FrameError
 from argparse import ArgumentParser
+from datetime import datetime
 
 
 argument_parser = ArgumentParser(description='benchPDC - will connect to given PDC'

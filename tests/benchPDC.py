@@ -1,5 +1,6 @@
 import time
 import datetime
+import os
 
 from synchrophasor.pdc import Pdc
 from synchrophasor.frame import FrameError
@@ -32,7 +33,12 @@ config = pdc.get_config()  # Get configuration from PMU
 measurements2receive = 60 * arguments.data_rate
 timestamp = datetime.now().strftime('%Y%m%d_%H:%M:%S')
 errors = 0
-log = "result_{:d}_{:d}_{:d}_{:s}.log".format(arguments.data_rate, arguments.jobs, arguments.id, timestamp)
+
+# Create result folder
+if not os.path.exists('results'):
+    os.makedirs('results')
+
+log = "./results/result_{:d}_{:d}_{:d}_{:s}.log".format(arguments.data_rate, arguments.jobs, arguments.id, timestamp)
 
 pdc.start()  # Request to start sending measurements
 start_time = stop_time = time.time()

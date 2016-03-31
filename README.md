@@ -240,9 +240,9 @@ Please check [LICENSE.txt](LICENSE.txt).
 
 ## References ##
 
-* [IEEE C37.118](http://smartgridcenter.tamu.edu/resume/pdf/1/SynPhasor_std.pdf)
+* [IEEE C37.118](http://standards.ieee.org/findstds/standard/C37.118.2-2011.html)
  
 ## Citations ##
-_If you use pyPMU code for your research, please cite the following publication:_
+_If you use the pyPMU code for your research, please cite the following publication:_
 
 * S. Sandi, T. Popovic, B. Krstajic, "Python Implementation of IEEE C37.118 Communication Protocol", Journal of Electrical Engineering, Faculty of Electrical Engineering, University, Podgorica, Montenegro, Vol. 21, No. 1, December 2015, pp 108-117

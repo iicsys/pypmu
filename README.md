@@ -240,9 +240,9 @@ Please check [LICENSE.txt](LICENSE.txt).
 
 ## References ##
 
-* C37.118.2-2011 - IEEE Standard for Synchrophasor Data Transfer for Power Systems,  [link](http://standards.ieee.org/findstds/standard/C37.118.2-2011.html)
+* C37.118.2-2011 - IEEE Standard for Synchrophasor Data Transfer for Power Systems,  [>>](http://standards.ieee.org/findstds/standard/C37.118.2-2011.html)
  
 ## Citations ##
 _If you use the pyPMU code for your research, please cite the following publication:_
 
-* S. Sandi, T. Popovic, B. Krstajic, "Python Implementation of IEEE C37.118 Communication Protocol", Journal of Electrical Engineering, Faculty of Electrical Engineering, University, Podgorica, Montenegro, Vol. 21, No. 1, December 2015, pp 108-117, [link](http://www.jee.ac.me/ETF_JOURNAL/radovi/vol21/9.pdf)
+* S. Sandi, T. Popovic, B. Krstajic, "Python Implementation of IEEE C37.118 Communication Protocol", Journal of Electrical Engineering, Faculty of Electrical Engineering, University, Podgorica, Montenegro, Vol. 21, No. 1, December 2015, pp 108-117, [>>](http://www.jee.ac.me/ETF_JOURNAL/radovi/vol21/9.pdf)

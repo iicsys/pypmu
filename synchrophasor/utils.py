@@ -92,7 +92,7 @@ def crc16xmodem(data, crc=0):
 __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
-__license__ = "GPL"
+__license__ = "BSD-3"
 __version__ = "1.0"
 
 

@@ -4,7 +4,7 @@ This to-do list will help us to set priorities and define future work.
 
 ## Must Have ##
 
-* Implement `recv_all` if command is to long for buffer.
+* ~~Implement `recv_all` if command is to long for buffer.~~
 * Implement `convert2frame()` methods for DataFrame and ConfigFrame
 * Implement PDC methods - *getters*.
 * Upload to `pip`.
@@ -31,3 +31,5 @@ one method - easier for maintenance.
 what to do).
 * Add delay offset parameter to adjust exact number of Data frames 
 per second.
+* Make only one module with both PMU and PDC functionality utilizing
+Queue as incoming and outgoing stack.

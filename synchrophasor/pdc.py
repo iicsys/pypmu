@@ -103,29 +103,36 @@ class Pdc(object):
         :return: CommonFrame
         """
 
-        data = self.pmu_socket.recv(self.buffer_size)  # TODO: implement recv_all()
+        received_data = b''
         received_message = None
-        if data:
-            try:
-                received_message = CommonFrame.convert2frame(data)  # Try to decode received data
 
-                if isinstance(received_message, DataFrame):
-                    self.logger.debug("[%d] - Received measurement from PMU (%s:%d)",
-                                      self.pdc_id, self.pmu_ip, self.pmu_port)
-                elif isinstance(received_message, ConfigFrame):
-                    self.logger.debug("[%d] - Received configuration from PMU (%s:%d)",
-                                      self.pdc_id, self.pmu_ip, self.pmu_port)
-                elif isinstance(received_message, HeaderFrame):
-                    self.logger.debug("[%d] - Received header message from PMU (%s:%d)",
-                                      self.pdc_id, self.pmu_ip, self.pmu_port)
-                elif isinstance(received_message, CommandFrame):
-                    self.logger.debug("[%d] - Received command from PMU (%s:%d)",
-                                      self.pdc_id, self.pmu_ip, self.pmu_port)
-                else:
-                    self.logger.debug("[%d] - Whooa! Whooa! I don't know what is this :( Please implement "
-                                      "convert2frame() methods (%s:%d)", self.pdc_id, self.pmu_ip, self.pmu_port)
+        """
+        Keep receiving until SYNC + FRAMESIZE is received, 4 bytes in total.
+        Should get this in first iteration. FRAMESIZE is needed to determine when one complete message
+        has been received.
+        """
+
+        while len(received_data) < 4:
+            received_data += self.pmu_socket.recv(self.buffer_size)
+
+        bytes_received = len(received_data)
+        total_frame_size = int(bytes_received[2:])
+
+        # Keep receiving until every byte of that message is received
+        while bytes_received < total_frame_size:
+            message_chunk = self.pmu_socket.recv(min(total_frame_size - bytes_received, self.buffer_size))
+            if not message_chunk:
+                break
+            received_data.append(message_chunk)
+            bytes_received += len(message_chunk)
+
+        # If complete message is received try to decode it
+        if len(received_data) == total_frame_size:
+            try:
+                received_message = CommonFrame.convert2frame(received_data)  # Try to decode received data
+                self.logger.debug("[%d] - Received %s from PMU (%s:%d)", type(received_message).__name__,
+                                  self.pdc_id, self.pmu_ip, self.pmu_port)
             except FrameError:
-                received_message = None
                 self.logger.warning("[%d] - Received unknown message from PMU (%s:%d)",
                                     self.pdc_id, self.pmu_ip, self.pmu_port)
 

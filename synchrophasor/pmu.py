@@ -13,7 +13,7 @@ __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
 __license__ = "BSD-3"
-__version__ = "0.1"
+__version__ = "0.1.1"
 
 
 class Pmu(object):
@@ -44,24 +44,50 @@ class Pmu(object):
             while True:
 
                 command = None
+                received_data = b''
                 readable, writable, exceptional = select([connection], [], [], 0)  # Check for client commands
 
                 if readable:
-                    data = connection.recv(self.buffer_size)  # TODO: Refactor this to recv_all
+                    """
+                    Keep receiving until SYNC + FRAMESIZE is received, 4 bytes in total.
+                    Should get this in first iteration. FRAMESIZE is needed to determine when one complete message
+                    has been received.
+                    """
+                    while len(received_data) < 4:
+                        received_data += connection.recv(self.buffer_size)
 
-                    if data:
+                    bytes_received = len(received_data)
+                    total_frame_size = int(bytes_received[2:])
+
+                    # Keep receiving until every byte of that message is received
+                    while bytes_received < total_frame_size:
+                        message_chunk = connection.recv(min(total_frame_size - bytes_received, self.buffer_size))
+                        if not message_chunk:
+                            break
+                        received_data.append(message_chunk)
+                        bytes_received += len(message_chunk)
+
+                    # If complete message is received try to decode it
+                    if len(received_data) == total_frame_size:
                         try:
-                            received_message = CommonFrame.convert2frame(data)  # Try to decode received data
+                            received_message = CommonFrame.convert2frame(received_data)  # Try to decode received data
 
+                            self.logger.info("[%d] - Received command: [%s] <- (%s:%d)", self.pmu_id, command,
+                                                 address[0], address[1])
                             if isinstance(received_message, CommandFrame):
                                 command = received_message.get_command()
                                 self.logger.info("[%d] - Received command: [%s] <- (%s:%d)", self.pmu_id, command,
                                                  address[0], address[1])
                             else:
-                                pass
+                                self.logger.info("[%d] - Received %s: [%s] <- (%s:%d)", type(received_message).__name__,
+                                                 self.pmu_id, command, address[0], address[1])
                         except FrameError:
                             self.logger.warning("[%d] - Received unknown message <- (%s:%d)", self.pmu_id,
                                                 address[0], address[1])
+                    else:
+                        self.logger.warning("[%d] - Message not received completely <- (%s:%d)", self.pmu_id,
+                                            address[0], address[1])
+
                 if command == 'start':
                     sending_measurements_enabled = True
                     self.logger.info("[%d] - Start sending -> (%s:%d)", self.pmu_id, address[0], address[1])
@@ -118,7 +144,7 @@ class Pmu(object):
 
             process = multiprocessing.Process(
                 target=self.pmu_handler, args=(conn, address, buffer))
-            # process.daemon = True
+            process.daemon = True
             process.start()
             self.clients.append(process)
 
@@ -176,7 +202,7 @@ class Pmu(object):
         self.socket.listen(5)
 
         self.listener = threading.Thread(target=self.acceptor)  # Run acceptor thread to handle new connection
-        # self.listener.daemon = True
+        self.listener.daemon = True
         self.listener.start()
 
     def set_configuration(self, conifg=None):

@@ -116,7 +116,7 @@ class Pdc(object):
             received_data += self.pmu_socket.recv(self.buffer_size)
 
         bytes_received = len(received_data)
-        total_frame_size = pmu_code = int.from_bytes(byte_data[2:4], byteorder='big', signed=False)
+        total_frame_size = pmu_code = int.from_bytes(received_data[2:4], byteorder='big', signed=False)
 
         # Keep receiving until every byte of that message is received
         while bytes_received < total_frame_size:
@@ -130,8 +130,8 @@ class Pdc(object):
         if len(received_data) == total_frame_size:
             try:
                 received_message = CommonFrame.convert2frame(received_data)  # Try to decode received data
-                self.logger.debug("[%d] - Received %s from PMU (%s:%d)", type(received_message).__name__,
-                                  self.pdc_id, self.pmu_ip, self.pmu_port)
+                self.logger.debug("[%d] - Received %s from PMU (%s:%d)", self.pdc_id, type(received_message).__name__,
+                                  self.pmu_ip, self.pmu_port)
             except FrameError:
                 self.logger.warning("[%d] - Received unknown message from PMU (%s:%d)",
                                     self.pdc_id, self.pmu_ip, self.pmu_port)

@@ -57,7 +57,7 @@ class Pmu(object):
                         received_data += connection.recv(self.buffer_size)
 
                     bytes_received = len(received_data)
-                    total_frame_size = int(bytes_received[2:])
+                    total_frame_size = pmu_code = int.from_bytes(received_data[2:4], byteorder='big', signed=False)
 
                     # Keep receiving until every byte of that message is received
                     while bytes_received < total_frame_size:

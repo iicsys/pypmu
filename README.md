@@ -245,4 +245,6 @@ Please check [LICENSE.txt](LICENSE.txt).
 ## Citations ##
 _If you use the pyPMU code for your research, please cite the following publication:_
 
-* S. Sandi, T. Popovic, B. Krstajic, "Python Implementation of IEEE C37.118 Communication Protocol", Journal of Electrical Engineering, Faculty of Electrical Engineering, University, Podgorica, Montenegro, Vol. 21, No. 1, December 2015, pp 108-117, [>>](http://www.jee.ac.me/ETF_JOURNAL/radovi/vol21/9.pdf)
+* S. Sandi, T. Popovic, "pyPMU – Open Source Python Package for Synchrophasor Data Transfer", IEEE 24th Telecommunications Forum (TELFOR), Belgrade, Serbia, Nov 22-23
+
+* S. Sandi, T. Popovic, B. Krstajic, "Python Implementation of IEEE C37.118 Communication Protocol", Journal of Electrical Engineering, Faculty of Electrical Engineering, University, Podgorica, Montenegro, Vol. 21, No. 1, December 2015, pp 108-117

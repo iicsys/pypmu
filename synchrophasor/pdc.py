@@ -80,7 +80,7 @@ class Pdc(object):
         if isinstance(header, HeaderFrame):
             return header
         else:
-            return None
+            raise PdcError('Invalid Header message received')
 
     def get_config(self, version='cfg2'):
         """
@@ -95,7 +95,7 @@ class Pdc(object):
         if isinstance(config, ConfigFrame):
             return config
         else:
-            return None
+            raise PdcError('Invalid Configuration message received')
 
     def get(self):
         """
@@ -116,7 +116,7 @@ class Pdc(object):
             received_data += self.pmu_socket.recv(self.buffer_size)
 
         bytes_received = len(received_data)
-        total_frame_size = pmu_code = int.from_bytes(received_data[2:4], byteorder='big', signed=False)
+        total_frame_size = int.from_bytes(received_data[2:4], byteorder='big', signed=False)
 
         # Keep receiving until every byte of that message is received
         while bytes_received < total_frame_size:

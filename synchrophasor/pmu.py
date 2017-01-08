@@ -57,7 +57,7 @@ class Pmu(object):
                         received_data += connection.recv(self.buffer_size)
 
                     bytes_received = len(received_data)
-                    total_frame_size = pmu_code = int.from_bytes(received_data[2:4], byteorder='big', signed=False)
+                    total_frame_size = int.from_bytes(received_data[2:4], byteorder='big', signed=False)
 
                     # Keep receiving until every byte of that message is received
                     while bytes_received < total_frame_size:
@@ -72,15 +72,13 @@ class Pmu(object):
                         try:
                             received_message = CommonFrame.convert2frame(received_data)  # Try to decode received data
 
-                            self.logger.info("[%d] - Received command: [%s] <- (%s:%d)", self.pmu_id, command,
-                                                 address[0], address[1])
                             if isinstance(received_message, CommandFrame):
                                 command = received_message.get_command()
                                 self.logger.info("[%d] - Received command: [%s] <- (%s:%d)", self.pmu_id, command,
                                                  address[0], address[1])
                             else:
-                                self.logger.info("[%d] - Received %s: [%s] <- (%s:%d)", type(received_message).__name__,
-                                                 self.pmu_id, command, address[0], address[1])
+                                self.logger.info("[%d] - Received [%s] <- (%s:%d)", self.pmu_id,
+                                                 type(received_message).__name__, address[0], address[1])
                         except FrameError:
                             self.logger.warning("[%d] - Received unknown message <- (%s:%d)", self.pmu_id,
                                                 address[0], address[1])
@@ -88,36 +86,37 @@ class Pmu(object):
                         self.logger.warning("[%d] - Message not received completely <- (%s:%d)", self.pmu_id,
                                             address[0], address[1])
 
-                if command == 'start':
-                    sending_measurements_enabled = True
-                    self.logger.info("[%d] - Start sending -> (%s:%d)", self.pmu_id, address[0], address[1])
+                if command:
+                    if command == 'start':
+                        sending_measurements_enabled = True
+                        self.logger.info("[%d] - Start sending -> (%s:%d)", self.pmu_id, address[0], address[1])
 
-                elif command == 'stop':
-                    self.logger.info("[%d] - Stop sending -> (%s:%d)", self.pmu_id, address[0], address[1])
-                    sending_measurements_enabled = False
+                    elif command == 'stop':
+                        self.logger.info("[%d] - Stop sending -> (%s:%d)", self.pmu_id, address[0], address[1])
+                        sending_measurements_enabled = False
 
-                elif command == 'header':
-                    connection.sendall(self.header.convert2bytes())
-                    self.logger.info("[%d] - Requested Header frame sent -> (%s:%d)",
-                                     self.pmu_id, address[0], address[1])
-                elif command == 'cfg1':
-                    connection.sendall(self.cfg1.convert2bytes())
-                    self.logger.info("[%d] - Requested Configuration frame 1 sent -> (%s:%d)", self.pmu_id,
-                                     address[0], address[1])
-                elif command == 'cfg2':
-                    connection.sendall(self.cfg2.convert2bytes())
-                    self.logger.info("[%d] - Requested Configuration frame 2 sent -> (%s:%d)", self.pmu_id,
-                                     address[0], address[1])
-                elif command == 'cfg3':
-                    connection.sendall(self.cfg3.convert2bytes())
-                    self.logger.info("[%d] - Requested Configuration frame 3 sent -> (%s:%d)", self.pmu_id,
-                                     address[0], address[1])
+                    elif command == 'header':
+                        connection.sendall(self.header.convert2bytes())
+                        self.logger.info("[%d] - Requested Header frame sent -> (%s:%d)",
+                                         self.pmu_id, address[0], address[1])
+                    elif command == 'cfg1':
+                        connection.sendall(self.cfg1.convert2bytes())
+                        self.logger.info("[%d] - Requested Configuration frame 1 sent -> (%s:%d)", self.pmu_id,
+                                         address[0], address[1])
+                    elif command == 'cfg2':
+                        connection.sendall(self.cfg2.convert2bytes())
+                        self.logger.info("[%d] - Requested Configuration frame 2 sent -> (%s:%d)", self.pmu_id,
+                                         address[0], address[1])
+                    elif command == 'cfg3':
+                        connection.sendall(self.cfg3.convert2bytes())
+                        self.logger.info("[%d] - Requested Configuration frame 3 sent -> (%s:%d)", self.pmu_id,
+                                         address[0], address[1])
 
                 if sending_measurements_enabled and not buffer.empty():
                     sleep(delay)
                     connection.sendall(buffer.get())
                     self.logger.debug("[%d] - Message sent at [%f] -> (%s:%d)", self.pmu_id, time(), address[0],
-                                      address[1])  # TODO: Remove this for better performance
+                                      address[1])
 
         except Exception as e:
             print(e)
@@ -127,11 +126,12 @@ class Pmu(object):
             self.logger.info("[%d] - Connection from %s:%d has been closed.", self.pmu_id, address[0], address[1])
 
     def join(self):
-        # threading.Thread.join() is not interruptible, so tight loop in a sleep-based join
+
         while self.listener.is_alive():
             self.listener.join(0.5)
 
     def acceptor(self):
+
         while True:
             self.logger.info("[%d] - Waiting for connection on %s:%d", self.pmu_id, self.ip, self.port)
 
@@ -201,6 +201,7 @@ class Pmu(object):
         self.socket.bind((self.ip, self.port))
         self.socket.listen(5)
 
+        print('Running...')
         self.listener = threading.Thread(target=self.acceptor)  # Run acceptor thread to handle new connection
         self.listener.daemon = True
         self.listener.start()

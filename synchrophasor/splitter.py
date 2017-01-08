@@ -6,7 +6,7 @@ __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
 __license__ = "BSD-3"
-__version__ = "0.1"
+__version__ = "0.1.1"
 
 
 class StreamSplitter(object):
@@ -26,15 +26,18 @@ class StreamSplitter(object):
         self.pdc.run()
         self.source_header = self.pdc.get_header()
         self.source_cfg2 = self.pdc.get_config()
+        self.pdc.start()
 
         self.pmu.run()
         self.pmu.set_header(self.source_header)
         self.pmu.set_configuration(self.source_cfg2)
 
         while True:
-            if self.pmu.clients:
 
-                message = self.pdc.get()
+            message = self.pdc.get()
+
+            if self.pmu.clients and message:
+
                 self.pmu.send(message, set_timestamp=False)
 
                 if isinstance(message, HeaderFrame):

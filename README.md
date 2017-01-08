@@ -4,6 +4,8 @@ Synchrophasor module represents implementation of IEEE C37.118.2
 standard in Python. `synchrophasor` module is still in development phase
 but we have few very interesting tools.
 
+#### Note: Latest Alpha release v0.1.1
+
 ## Getting Started ##
 
 Synchrophasor module is made to be easy to install and run.

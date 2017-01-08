@@ -8,16 +8,15 @@ __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
 __license__ = "BSD-3"
-__version__ = "0.1"
+__version__ = "0.1.1"
 
 
 class Pdc(object):
 
-    logger = logging.getLogger()
+    logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
 
     handler = logging.StreamHandler(stdout)
-    handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
@@ -95,7 +94,8 @@ class Pdc(object):
         if isinstance(config, ConfigFrame):
             return config
         else:
-            raise PdcError('Invalid Configuration message received')
+            # TODO: raise PdcError('Invalid Configuration message received')
+            return None
 
     def get(self):
         """
@@ -123,7 +123,7 @@ class Pdc(object):
             message_chunk = self.pmu_socket.recv(min(total_frame_size - bytes_received, self.buffer_size))
             if not message_chunk:
                 break
-            received_data.append(message_chunk)
+            received_data += message_chunk
             bytes_received += len(message_chunk)
 
         # If complete message is received try to decode it

@@ -18,11 +18,9 @@ __version__ = "0.1.1"
 
 class Pmu(object):
 
-    logger = logging.getLogger()
+    logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
-
     handler = logging.StreamHandler(stdout)
-    handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
@@ -64,7 +62,7 @@ class Pmu(object):
                         message_chunk = connection.recv(min(total_frame_size - bytes_received, self.buffer_size))
                         if not message_chunk:
                             break
-                        received_data.append(message_chunk)
+                        received_data += message_chunk
                         bytes_received += len(message_chunk)
 
                     # If complete message is received try to decode it
@@ -201,7 +199,6 @@ class Pmu(object):
         self.socket.bind((self.ip, self.port))
         self.socket.listen(5)
 
-        print('Running...')
         self.listener = threading.Thread(target=self.acceptor)  # Run acceptor thread to handle new connection
         self.listener.daemon = True
         self.listener.start()

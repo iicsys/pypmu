@@ -1357,7 +1357,7 @@ class ConfigFrame2(ConfigFrame1):
     ## ConfigFrame2 ##
 
     ConfigFrame2 is class which represents configuration frame v2.
-    Carries info acout current data stream.
+    Carries info about current data stream.
 
     Class implements two abstract methods from super class.
 

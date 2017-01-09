@@ -1,5 +1,6 @@
 from synchrophasor.pmu import Pmu
 
+
 """
 tinyPMU will listen on ip:port for incoming connections.
 When tinyPMU receives command to start sending
@@ -19,4 +20,3 @@ while True:
         pmu.send(pmu.ieee_data_sample)  # Sending sample data frame specified in IEEE C37.118.2 - Annex D (Table D.1)
 
 pmu.join()
-

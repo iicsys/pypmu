@@ -1,5 +1,6 @@
 from synchrophasor.splitter import StreamSplitter
 
+
 """
 StreamSplitter will pass source data stream to each connected PDC.
 Variables source_ip and source_port represent data stream source

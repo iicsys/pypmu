@@ -2,6 +2,7 @@ from synchrophasor.frame import *
 from synchrophasor.pdc import Pdc
 from synchrophasor.pmu import Pmu
 
+
 __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
@@ -10,7 +11,6 @@ __version__ = "0.1.1"
 
 
 class StreamSplitter(object):
-
     def __init__(self, source_ip, source_port, listen_ip, listen_port, pdc_id=1, method='tcp', buffer_size=2048):
 
         self.pdc = Pdc(pdc_id, source_ip, source_port, buffer_size, method)
@@ -20,6 +20,7 @@ class StreamSplitter(object):
         self.source_cfg2 = None
         self.source_cfg3 = None
         self.source_header = None
+
 
     def run(self):
 

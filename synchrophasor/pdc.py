@@ -4,6 +4,7 @@ import socket
 from sys import stdout
 from synchrophasor.frame import *
 
+
 __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
@@ -12,7 +13,6 @@ __version__ = "0.1.1"
 
 
 class Pdc(object):
-
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
 
@@ -20,6 +20,7 @@ class Pdc(object):
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
+
 
     def __init__(self, pdc_id=1, pmu_ip='127.0.0.1', pmu_port=4712, buffer_size=2048, method='tcp'):
 
@@ -31,6 +32,7 @@ class Pdc(object):
         self.pmu_port = pmu_port
         self.pmu_address = (pmu_ip, pmu_port)
         self.pmu_socket = None
+
 
     def run(self):
 
@@ -47,6 +49,7 @@ class Pdc(object):
                 self.logger.error("[%d] - Error while connecting to (%s:%d)", self.pdc_id, self.pmu_ip, self.pmu_port)
                 self.logger.error(str(e))
 
+
     def start(self):
         """
         Request from PMU to start sending data
@@ -56,6 +59,7 @@ class Pdc(object):
         self.pmu_socket.sendall(start.convert2bytes())
         self.logger.info("[%d] - Requesting to start sending from PMU (%s:%d)", self.pdc_id, self.pmu_ip, self.pmu_port)
 
+
     def stop(self):
         """
         Request from PMU to start sending data
@@ -64,6 +68,7 @@ class Pdc(object):
         start = CommandFrame(self.pdc_id, 'stop')
         self.pmu_socket.sendall(start.convert2bytes())
         self.logger.info("[%d] - Requesting to stop sending from PMU (%s:%d)", self.pdc_id, self.pmu_ip, self.pmu_port)
+
 
     def get_header(self):
         """
@@ -81,6 +86,7 @@ class Pdc(object):
         else:
             raise PdcError('Invalid Header message received')
 
+
     def get_config(self, version='cfg2'):
         """
         Request for Configuration frame.
@@ -96,6 +102,7 @@ class Pdc(object):
         else:
             # TODO: raise PdcError('Invalid Configuration message received')
             return None
+
 
     def get(self):
         """
@@ -137,6 +144,7 @@ class Pdc(object):
                                     self.pdc_id, self.pmu_ip, self.pmu_port)
 
         return received_message
+
 
     def quit(self):
         """

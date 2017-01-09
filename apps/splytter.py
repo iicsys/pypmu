@@ -3,6 +3,7 @@
 from argparse import ArgumentParser
 from synchrophasor.splitter import StreamSplitter
 
+
 """
 splytter - will pass source data stream to each connected PDC.
 Variables source_ip and source_port represent data stream source

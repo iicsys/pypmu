@@ -1,13 +1,14 @@
-import multiprocessing
-import threading
-import socket
 import logging
-
-from synchrophasor.frame import *
-from sys import stdout
+import multiprocessing
+import socket
+import threading
 from select import select
+from sys import stdout
 from time import sleep
 from time import time
+
+from synchrophasor.frame import *
+
 
 __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
@@ -17,13 +18,13 @@ __version__ = "0.1.1"
 
 
 class Pmu(object):
-
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
     handler = logging.StreamHandler(stdout)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
+
 
     def pmu_handler(self, connection, address, buffer):
 
@@ -123,10 +124,12 @@ class Pmu(object):
             self.client_buffers.remove(buffer)
             self.logger.info("[%d] - Connection from %s:%d has been closed.", self.pmu_id, address[0], address[1])
 
+
     def join(self):
 
         while self.listener.is_alive():
             self.listener.join(0.5)
+
 
     def acceptor(self):
 
@@ -141,13 +144,14 @@ class Pmu(object):
             self.client_buffers.append(buffer)
 
             process = multiprocessing.Process(
-                target=self.pmu_handler, args=(conn, address, buffer))
+                    target=self.pmu_handler, args=(conn, address, buffer))
             process.daemon = True
             process.start()
             self.clients.append(process)
 
             # Close the connection fd in the parent, since the child process has its own reference.
             conn.close()
+
 
     def __init__(self, pmu_id=7734, data_rate=30, port=4712, ip='127.0.0.1', method='tcp', buffer_size=2048):
 
@@ -189,6 +193,7 @@ class Pmu(object):
         self.clients = []
         self.client_buffers = []
 
+
     def run(self):
 
         if not self.cfg1 and not self.cfg2 and not self.cfg3:
@@ -202,6 +207,7 @@ class Pmu(object):
         self.listener = threading.Thread(target=self.acceptor)  # Run acceptor thread to handle new connection
         self.listener.daemon = True
         self.listener.start()
+
 
     def set_configuration(self, conifg=None):
 
@@ -247,6 +253,7 @@ class Pmu(object):
 
         self.logger.info("[%d] - PMU configuration changed.", self.pmu_id)
 
+
     def set_header(self, header=None):
 
         if isinstance(header, HeaderFrame):
@@ -260,6 +267,7 @@ class Pmu(object):
         self.send(self.header)
 
         self.logger.info("[%d] - PMU header changed.", self.pmu_id)
+
 
     def set_id(self, pmu_id):
 
@@ -275,6 +283,7 @@ class Pmu(object):
 
         self.logger.info("[%d] - PMU Id changed.", self.pmu_id)
 
+
     def set_data_rate(self, data_rate):
 
         # self.cfg1.set_data_rate(data_rate)
@@ -289,6 +298,7 @@ class Pmu(object):
 
         self.logger.info("[%d] - PMU reporting data rate changed.", self.pmu_id)
 
+
     def set_data_format(self, data_format):
 
         self.cfg1.set_data_format(data_format, self.cfg1.num_pmu)
@@ -302,6 +312,7 @@ class Pmu(object):
         # self.send(self.cfg3)
 
         self.logger.info("[%d] - PMU data format changed.", self.pmu_id)
+
 
     def send(self, frame, set_timestamp=True):
 
@@ -320,6 +331,7 @@ class Pmu(object):
         for buffer in self.client_buffers:
             buffer.put(data)
 
+
     def send_data(self, phasors=[], analog=[], digital=[], freq=0, dfreq=0,
                   stat=('ok', True, 'timestamp', False, False, False, 0, '<10', 0), soc=None, frasec=None):
 
@@ -330,9 +342,9 @@ class Pmu(object):
 
             for i, df in self.data_format:  # TODO: Are you really going to check data format like this?
                 if df in [0, 1, 4, 5, 8, 12, 13]:  # Check if phasor representation is integer
-                    phasors[i] = map(lambda x: int(x/(0.00001*self.cfg2.ph_units[i])), phasors[i])
+                    phasors[i] = map(lambda x: int(x / (0.00001 * self.cfg2.ph_units[i])), phasors[i])
         elif self.data_format in [0, 1, 4, 5, 8, 12, 13]:
-            phasors = map(lambda x: int(x/(0.00001*self.cfg2.ph_units)), phasors)
+            phasors = map(lambda x: int(x / (0.00001 * self.cfg2.ph_units)), phasors)
 
         # AN_UNIT conversion
         if analog and self.num_pmu > 1:  # Check if multistreaming:
@@ -341,9 +353,9 @@ class Pmu(object):
 
             for i, df in self.data_format:  # TODO: Are you really going to check data format like this?
                 if df in [0, 1, 2, 3, 8, 9, 10]:  # Check if analog representation is integer
-                    analog[i] = map(lambda x: int(x/self.cfg2.an_units[i]), analog[i])
+                    analog[i] = map(lambda x: int(x / self.cfg2.an_units[i]), analog[i])
         elif self.data_format in [0, 1, 2, 3, 8, 9, 10]:
-            analog = map(lambda x: int(x/self.cfg2.an_units), analog)
+            analog = map(lambda x: int(x / self.cfg2.an_units), analog)
 
         data_frame = DataFrame(self.pmu_id, stat, phasors, freq, dfreq, analog, digital,
                                self.data_format, self.num_pmu)

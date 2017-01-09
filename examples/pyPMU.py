@@ -1,5 +1,6 @@
-from synchrophasor.pmu import Pmu
 from synchrophasor.frame import *
+from synchrophasor.pmu import Pmu
+
 
 """
 pyPMU is custom configured PMU simulator. Code below represents
@@ -33,10 +34,8 @@ cfg = ConfigFrame2(7,  # PMU_ID
                    1,  # Configuration change count
                    240)  # Rate of phasor data transmission)
 
-
 hf = HeaderFrame(7,  # PMU_ID
                  "Hello I'm nanoPMU!")  # Header Message
-
 
 df = DataFrame(7,  # PMU_ID
                ('ok', True, 'timestamp', False, False, False, 0, '<10', 0),  # STAT WORD - Check DataFrame set_stat()

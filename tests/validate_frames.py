@@ -1,8 +1,10 @@
 import binascii
-from synchrophasor.frame import DataFrame
-from synchrophasor.frame import ConfigFrame2
-from synchrophasor.frame import HeaderFrame
+
 from synchrophasor.frame import CommandFrame
+from synchrophasor.frame import ConfigFrame2
+from synchrophasor.frame import DataFrame
+from synchrophasor.frame import HeaderFrame
+
 
 __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
@@ -10,12 +12,11 @@ __credits__ = []
 __license__ = "BSD-3"
 __version__ = "0.1"
 
-
 data_hex_string = 'aa0100341e3644853600000041b10000392b0000e36ace7ce36a31830444000009c4000042c80000447a0000461c4000' \
                   '3c12d43f'
 
 df = DataFrame(7734, ('ok', True, 'timestamp', False, False, False, 0, '<10', 0),
-               [(14635,  0), (58218, 52860), (58218, 12675), (1092, 0)], 2500, 0, [100, 1000, 10000], [0x3c12], 0x0004,
+               [(14635, 0), (58218, 52860), (58218, 12675), (1092, 0)], 2500, 0, [100, 1000, 10000], [0x3c12], 0x0004,
                soc=1149580800, frasec=16817)
 
 # df.set_soc(1149580800)
@@ -25,14 +26,13 @@ data_hex_result = str(binascii.hexlify(df.convert2bytes()), 'utf-8')
 
 assert data_hex_string == data_hex_result, "Data Frame Error."
 
-
 data_multi_hex_string = 'aa0100581e3644853600000041b10000392b0000e36ace7ce36a31830444000009c4000042c80000447a0000' \
                         '461c40003c120000392b0000e36ace7ce36a31830444000009c4000042c80000447a0000461c40003c12bd52'
 
 dfm = DataFrame(7734, [('ok', True, 'timestamp', False, False, False, 0, '<10', 0),
                        ('ok', True, 'timestamp', False, False, False, 0, '<10', 0)],
                 [[(14635, 0), (58218, 52860), (58218, 12675), (1092, 0)],
-                [(14635, 0), (58218, 52860), (58218, 12675), (1092, 0)]], [2500, 2500], [0, 0],
+                 [(14635, 0), (58218, 52860), (58218, 12675), (1092, 0)]], [2500, 2500], [0, 0],
                 [[100, 1000, 10000], [100, 1000, 10000]], [[0x3c12], [0x3c12]], [0x0004, 0x0004], 2, 1149580800, 16817)
 
 # dfm.set_soc(1149580800)
@@ -70,7 +70,6 @@ cfg_hex_result = str(binascii.hexlify(cfg.convert2bytes()), 'utf-8')
 
 assert cfg_hex_result == cfg_hex_string, "Configuration Frame v2 Error."
 
-
 cfg_multi_hex_string = 'aa3103741e36448527f056071098000f4240000253746174696f6e2041202020202020201e360004000400030001' \
                        '56412020202020202020202020202020564220202020202020202020202020205643202020202020202020202020' \
                        '202049312020202020202020202020202020414e414c4f4731202020202020202020414e414c4f47322020202020' \
@@ -100,11 +99,11 @@ cfgm = ConfigFrame2(7734, 1000000, 2, ["Station A", "Station A"], [7734, 7734], 
                       "BREAKER 6 STATUS", "BREAKER 7 STATUS", "BREAKER 8 STATUS", "BREAKER 9 STATUS",
                       "BREAKER A STATUS", "BREAKER B STATUS", "BREAKER C STATUS", "BREAKER D STATUS",
                       "BREAKER E STATUS", "BREAKER F STATUS", "BREAKER G STATUS"],
-                    ["VA", "VB", "VC", "I1", "ANALOG1", "ANALOG2", "ANALOG3", "BREAKER 1 STATUS",
-                     "BREAKER 2 STATUS", "BREAKER 3 STATUS", "BREAKER 4 STATUS", "BREAKER 5 STATUS",
-                     "BREAKER 6 STATUS", "BREAKER 7 STATUS", "BREAKER 8 STATUS", "BREAKER 9 STATUS",
-                     "BREAKER A STATUS", "BREAKER B STATUS", "BREAKER C STATUS", "BREAKER D STATUS",
-                     "BREAKER E STATUS", "BREAKER F STATUS", "BREAKER G STATUS"]],
+                     ["VA", "VB", "VC", "I1", "ANALOG1", "ANALOG2", "ANALOG3", "BREAKER 1 STATUS",
+                      "BREAKER 2 STATUS", "BREAKER 3 STATUS", "BREAKER 4 STATUS", "BREAKER 5 STATUS",
+                      "BREAKER 6 STATUS", "BREAKER 7 STATUS", "BREAKER 8 STATUS", "BREAKER 9 STATUS",
+                      "BREAKER A STATUS", "BREAKER B STATUS", "BREAKER C STATUS", "BREAKER D STATUS",
+                      "BREAKER E STATUS", "BREAKER F STATUS", "BREAKER G STATUS"]],
                     [[(915527, 'v'), (915527, 'v'), (915527, 'v'), (45776, 'i')],
                      [(915527, 'v'), (915527, 'v'), (915527, 'v'), (45776, 'i')]],
                     [[(1, 'pow'), (1, 'rms'), (1, 'peak')], [(1, 'pow'), (1, 'rms'), (1, 'peak')]],

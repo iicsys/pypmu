@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
-import time
 import os
+import time
 
-from synchrophasor.pdc import Pdc
 from argparse import ArgumentParser
 from datetime import datetime
 from time import sleep
+from synchrophasor.pdc import Pdc
+
 
 argument_parser = ArgumentParser(description='benchPDC - will connect to given PDC'
                                              'Usage example: '
@@ -40,10 +41,11 @@ header = pdc.get_header()  # Get header message from PMU
 config = pdc.get_config()  # Get configuration from PMU
 
 # Create result folder
-if not os.path.exists('results/'+ str(arguments.data_rate)):
-    os.makedirs('results/'+ str(arguments.data_rate))
+if not os.path.exists('results/' + str(arguments.data_rate)):
+    os.makedirs('results/' + str(arguments.data_rate))
 
-log = "./results/{:d}/result_j{:d}_id_{:d}_{:s}.log".format(arguments.data_rate, arguments.jobs, arguments.id, timestamp)
+log = "./results/{:d}/result_j{:d}_id_{:d}_{:s}.log".format(arguments.data_rate, arguments.jobs, arguments.id,
+                                                            timestamp)
 
 pdc.start()  # Request to start sending measurements
 start_time = stop_time = time.time()
@@ -68,5 +70,5 @@ while measurements2receive > 0:
 with open(log, 'w') as log_file:
     log_file.write("PDC ID: {:d}\n".format(arguments.id))
     log_file.write("PMU: {:s}:{:d}\n".format(arguments.ip, arguments.port))
-    log_file.write("Result: {0:.4f}\n".format(stop_time-start_time))
+    log_file.write("Result: {0:.4f}\n".format(stop_time - start_time))
     log_file.write("Errors: {:d}\n".format(errors))

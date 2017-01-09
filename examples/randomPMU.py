@@ -1,6 +1,8 @@
-from synchrophasor.pmu import Pmu
-from synchrophasor.frame import ConfigFrame2
 import random
+
+from synchrophasor.frame import ConfigFrame2
+from synchrophasor.pmu import Pmu
+
 
 """
 randomPMU will listen on ip:port for incoming connections.
@@ -31,7 +33,6 @@ cfg = ConfigFrame2(1410,  # PMU_ID
                    50,  # Nominal frequency
                    1,  # Configuration change count
                    30)  # Rate of phasor data transmission)
-
 
 pmu.set_configuration(cfg)
 pmu.set_header("Hey! I'm randomPMU! Guess what? I'm sending random measurements values!")

@@ -1,7 +1,7 @@
 import logging
 import socket
-
 from sys import stdout
+
 from synchrophasor.frame import *
 
 
@@ -13,6 +13,7 @@ __version__ = "0.1.1"
 
 
 class Pdc(object):
+
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
 
@@ -97,7 +98,7 @@ class Pdc(object):
         self.pmu_socket.sendall(get_config.convert2bytes())
 
         config = self.get()
-        if isinstance(config, ConfigFrame):
+        if isinstance(config, ConfigFrame1) or isinstance(config, ConfigFrame2):
             return config
         else:
             # TODO: raise PdcError('Invalid Configuration message received')

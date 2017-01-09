@@ -65,6 +65,15 @@ class CommonFrame(metaclass=ABCMeta):
 
 
     def __init__(self, frame_type, pmu_id_code, soc=None, frasec=None, version=1):
+        """
+        CommonFrame abstract class
+        :param string frame_type: Defines frame type
+        :param int pmu_id_code: Standard version. Default value: ``1``
+        :param int soc:
+        :param int frasec:
+        :param int version:
+        :return:
+        """
 
         self.set_frame_type(frame_type)
         self.set_version(version)
@@ -568,15 +577,13 @@ class CommonFrame(metaclass=ABCMeta):
         return convert_method[frame_type](byte_data)
 
 
-class ConfigFrame(CommonFrame):
-    pass
-
-
-class ConfigFrame1(ConfigFrame):
+class ConfigFrame1(CommonFrame):
     """
     ## ConfigFrame1 ##
 
     ConfigFrame1 is class which represents configuration frame v1.
+    Configuration frame version 1 carries info about device reporting
+    ability.
 
     Class implements two abstract methods from super class.
 
@@ -618,62 +625,12 @@ class ConfigFrame1(ConfigFrame):
         FrameError
     When it's not possible to create valid frame, usually due invalid parameter value.
     """
-    pass  # TODO: Implement ConfigFrame1
-
-
-class ConfigFrame2(ConfigFrame):
-    """
-    ## ConfigFrame2 ##
-
-    ConfigFrame2 is class which represents configuration frame v2.
-
-    Class implements two abstract methods from super class.
-
-    * ``convert2bytes()`` - for converting ConfigFrame2 to bytes.
-    * ``convert2frame()`` - which converts array of bytes to ConfigFrame2.
-
-    Each instance of ConfigFrame2 class will have following attributes.
-
-    **Attributes:**
-
-    * ``frame_type`` **(int)** - Defines frame type. Inherited from ``CommonFrame``.
-    * ``version`` **(int)** - Standard version. Inherited from ``CommonFrame``. Default value: ``1``.
-    * ``pmu_id_code`` **(int)** - PMU Id code which identifies data stream. Inherited from ``CommonFrame``.
-    * ``soc`` **(int)** - UNIX timestamp. Default value: ``None``. Inherited from ``CommonFrame``.
-    * ``frasec`` **(int)** - Fraction of second and Time Quality. Default value: ``None``.
-      Inherited from ``CommonFrame``.
-    * ``time_base`` **(int)** - Resolution of the fractional second time stamp in all frames.
-    * ``num_pmu`` **(int)** - Number of PMUs (data streams) included in single ``DataFrame``.
-    * ``multistreaming`` **(bool)** - ``True`` if ``num_pmu > 1``. That means data frame consist of multiple
-      measurement streams.
-    * ``station_name`` **(mixed)** - Station name ``(string)`` or station names ``(list)`` if ``multistreaming``.
-    * ``id_code`` **(mixed)** - Measurement stream ID code ``(int)`` or ``(list)`` if ``multistreaming``. Each ID
-      identifies source PMU of each data block.
-    * ``data_format`` **(mixed)** - Data format for each data stream. Inherited from ``CommonFrame``.
-    * ``phasor_num`` **(mixed)** - Number of phasors ``(int)`` or ``(list)`` if ``multistreaming``.
-    * ``analog_num`` **(mixed)** - Number of analog values ``(int)`` or ``(list)`` if ``multistreaming``.
-    * ``digital_num`` **(mixed)** - Number of digital status words ``(int)`` or ``(list)`` if ``multistreaming``.
-    * ``channel_names`` **(list)** - List of phasor and channel names for phasor, analog and digital channel.
-      If ``multistreaming`` it's list of lists.
-    * ``ph_units`` **(list)** - Conversion factor for phasor channels. If ``multistreaming`` list of lists.
-    * ``an_units`` **(list)** - Conversion factor for analog channels. If ``multistreaming`` list of lists.
-    * ``dig_units`` **(list)** - Mask words for digital status word. If ``multistreaming`` list of lists.
-    * ``fnom``  **(mixed)** - Nominal frequency code and flags. If ``multistreaming`` list of ints.
-    * ``cfg_count`` **(mixed)** - Configuration change count. If ``multistreaming`` list of ints.
-    * ``data_rate`` **(int)** - Frames per second or seconds per frame (if negative ``int``).
-
-    **Raises:**
-
-        FrameError
-    When it's not possible to create valid frame, usually due invalid parameter value.
-    """
-
 
     def __init__(self, pmu_id_code, time_base, num_pmu, station_name, id_code, data_format, phasor_num, analog_num,
                  digital_num, channel_names, ph_units, an_units, dig_units, f_nom, cfg_count, data_rate,
                  soc=None, frasec=None, version=1):
 
-        super().__init__('cfg2', pmu_id_code, soc, frasec, version)  # Init CommonFrame with 'cfg2' frame type
+        super().__init__('cfg1', pmu_id_code, soc, frasec, version)  # Init CommonFrame with 'cfg1' frame type
 
         self.set_time_base(time_base)
         self.set_num_pmu(num_pmu)
@@ -994,7 +951,7 @@ class ConfigFrame2(ConfigFrame):
 
                 ph_values = []
                 for ph_tuple in ph_unit:
-                    ph_values.append(ConfigFrame2.phunit2int(*ph_tuple))
+                    ph_values.append(ConfigFrame1.phunit2int(*ph_tuple))
 
                 phunit_list.append(ph_values)
 
@@ -1003,7 +960,7 @@ class ConfigFrame2(ConfigFrame):
             if not all(isinstance(el, tuple) for el in ph_units) or self.phasor_num != len(ph_units):
                 raise FrameError("Provide PHUNIT as list of tuples with PHNMR elements. Ex: [(1234,'u'),(1234, 'i')]")
 
-            self.ph_units = [ConfigFrame2.phunit2int(*phun) for phun in ph_units]
+            self.ph_units = [ConfigFrame1.phunit2int(*phun) for phun in ph_units]
 
 
     def phunit2int(scale, phasor_type='v'):
@@ -1081,7 +1038,7 @@ class ConfigFrame2(ConfigFrame):
 
                 an_values = []
                 for an_tuple in an_unit:
-                    an_values.append(ConfigFrame2.anunit2int(*an_tuple))
+                    an_values.append(ConfigFrame1.anunit2int(*an_tuple))
 
                 anunit_list.append(an_values)
 
@@ -1091,7 +1048,7 @@ class ConfigFrame2(ConfigFrame):
                 raise FrameError("Provide ANUNIT as list of tuples with ANNMR elements. "
                                  "Ex: [(1234,'pow'),(1234, 'rms')]")
 
-            self.an_units = [ConfigFrame2.anunit2int(*anun) for anun in an_units]
+            self.an_units = [ConfigFrame1.anunit2int(*anun) for anun in an_units]
 
 
     def anunit2int(scale, anunit_type='pow'):
@@ -1181,7 +1138,7 @@ class ConfigFrame2(ConfigFrame):
 
                 dig_values = []
                 for dig_tuple in dig_unit:
-                    dig_values.append(ConfigFrame2.digunit2int(*dig_tuple))
+                    dig_values.append(ConfigFrame1.digunit2int(*dig_tuple))
 
                 digunit_list.append(dig_values)
 
@@ -1191,7 +1148,7 @@ class ConfigFrame2(ConfigFrame):
                 raise FrameError("Provide DIGUNIT as list of tuples with DGNMR elements. "
                                  "Ex: [(0x0000,0xffff),(0x0011, 0xff0f)]")
 
-            self.dig_units = [ConfigFrame2.digunit2int(*dgun) for dgun in dig_units]
+            self.dig_units = [ConfigFrame1.digunit2int(*dgun) for dgun in dig_units]
 
 
     def digunit2int(first_mask, second_mask):
@@ -1254,12 +1211,12 @@ class ConfigFrame2(ConfigFrame):
 
             fnom_list = []
             for fnom in f_nom:
-                fnom_list.append(ConfigFrame2.fnom2int(fnom))
+                fnom_list.append(ConfigFrame1.fnom2int(fnom))
 
             self.f_nom = fnom_list
 
         else:
-            self.f_nom = ConfigFrame2.fnom2int(f_nom)
+            self.f_nom = ConfigFrame1.fnom2int(f_nom)
 
 
     def fnom2int(fnom=60):
@@ -1395,7 +1352,65 @@ class ConfigFrame2(ConfigFrame):
         return byte_data
 
 
-class ConfigFrame3(ConfigFrame):
+class ConfigFrame2(ConfigFrame1):
+    """
+    ## ConfigFrame2 ##
+
+    ConfigFrame2 is class which represents configuration frame v2.
+    Carries info acout current data stream.
+
+    Class implements two abstract methods from super class.
+
+    * ``convert2bytes()`` - for converting ConfigFrame2 to bytes.
+    * ``convert2frame()`` - which converts array of bytes to ConfigFrame2.
+
+    Each instance of ConfigFrame2 class will have following attributes.
+
+    **Attributes:**
+
+    * ``frame_type`` **(int)** - Defines frame type. Inherited from ``CommonFrame``.
+    * ``version`` **(int)** - Standard version. Inherited from ``CommonFrame``. Default value: ``1``.
+    * ``pmu_id_code`` **(int)** - PMU Id code which identifies data stream. Inherited from ``CommonFrame``.
+    * ``soc`` **(int)** - UNIX timestamp. Default value: ``None``. Inherited from ``CommonFrame``.
+    * ``frasec`` **(int)** - Fraction of second and Time Quality. Default value: ``None``.
+      Inherited from ``CommonFrame``.
+    * ``time_base`` **(int)** - Resolution of the fractional second time stamp in all frames.
+    * ``num_pmu`` **(int)** - Number of PMUs (data streams) included in single ``DataFrame``.
+    * ``multistreaming`` **(bool)** - ``True`` if ``num_pmu > 1``. That means data frame consist of multiple
+      measurement streams.
+    * ``station_name`` **(mixed)** - Station name ``(string)`` or station names ``(list)`` if ``multistreaming``.
+    * ``id_code`` **(mixed)** - Measurement stream ID code ``(int)`` or ``(list)`` if ``multistreaming``. Each ID
+      identifies source PMU of each data block.
+    * ``data_format`` **(mixed)** - Data format for each data stream. Inherited from ``CommonFrame``.
+    * ``phasor_num`` **(mixed)** - Number of phasors ``(int)`` or ``(list)`` if ``multistreaming``.
+    * ``analog_num`` **(mixed)** - Number of analog values ``(int)`` or ``(list)`` if ``multistreaming``.
+    * ``digital_num`` **(mixed)** - Number of digital status words ``(int)`` or ``(list)`` if ``multistreaming``.
+    * ``channel_names`` **(list)** - List of phasor and channel names for phasor, analog and digital channel.
+      If ``multistreaming`` it's list of lists.
+    * ``ph_units`` **(list)** - Conversion factor for phasor channels. If ``multistreaming`` list of lists.
+    * ``an_units`` **(list)** - Conversion factor for analog channels. If ``multistreaming`` list of lists.
+    * ``dig_units`` **(list)** - Mask words for digital status word. If ``multistreaming`` list of lists.
+    * ``fnom``  **(mixed)** - Nominal frequency code and flags. If ``multistreaming`` list of ints.
+    * ``cfg_count`` **(mixed)** - Configuration change count. If ``multistreaming`` list of ints.
+    * ``data_rate`` **(int)** - Frames per second or seconds per frame (if negative ``int``).
+
+    **Raises:**
+
+        FrameError
+    When it's not possible to create valid frame, usually due invalid parameter value.
+    """
+
+    def __init__(self, pmu_id_code, time_base, num_pmu, station_name, id_code, data_format, phasor_num, analog_num,
+                 digital_num, channel_names, ph_units, an_units, dig_units, f_nom, cfg_count, data_rate,
+                 soc=None, frasec=None, version=1):
+
+        super().__init__(pmu_id_code, time_base, num_pmu, station_name, id_code, data_format, phasor_num, analog_num,
+                         digital_num, channel_names, ph_units, an_units, dig_units, f_nom, cfg_count,
+                         data_rate, soc, frasec, version)
+        super().set_frame_type('cfg2')
+
+
+class ConfigFrame3(CommonFrame):
     """
     ## ConfigFrame3 ##
 
@@ -1406,7 +1421,7 @@ class ConfigFrame3(ConfigFrame):
     * ``convert2bytes()`` - for converting ConfigFrame3 to bytes.
     * ``convert2frame()`` - which converts array of bytes to ConfigFrame3.
 
-    Each instance of ConfigFrame2 class will have following attributes.
+    Each instance of ConfigFrame3 class will have following attributes.
 
     **Attributes:**
 
@@ -1445,6 +1460,7 @@ class ConfigFrame3(ConfigFrame):
 
 
 class DataFrame(CommonFrame):
+
     MEASUREMENT_STATUS = { 'ok': 0, 'error': 1, 'test': 2, 'verror': 3 }
     UNLOCKED_TIME = { '<10': 0, '<100': 1, '<1000': 2, '>1000': 3 }
 
@@ -1782,6 +1798,7 @@ class DataFrame(CommonFrame):
 
 
 class CommandFrame(CommonFrame):
+
     COMMANDS = { 'stop': 1, 'start': 2, 'header': 3, 'cfg1': 4, 'cfg2': 5, 'cfg3': 6, 'extended': 8 }
 
     # Invert CommandFrame.COMMANDS to get COMMAND_WORDS
@@ -1887,6 +1904,7 @@ class CommandFrame(CommonFrame):
 
 
 class HeaderFrame(CommonFrame):
+
     def __init__(self, pmu_id_code, header, soc=None, frasec=None):
 
         super().__init__('header', pmu_id_code, soc, frasec)

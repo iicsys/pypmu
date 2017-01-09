@@ -41,4 +41,3 @@ print("[ INFO ] Using {:s} method with buffer size: {:d}".format(arguments.metho
 print("_________________________________________________________________")
 
 sp.run()
-sp.join()

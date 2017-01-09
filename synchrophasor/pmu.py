@@ -2,11 +2,11 @@ import logging
 import multiprocessing
 import socket
 import threading
+
 from select import select
 from sys import stdout
 from time import sleep
 from time import time
-
 from synchrophasor.frame import *
 
 
@@ -18,6 +18,7 @@ __version__ = "0.1.1"
 
 
 class Pmu(object):
+
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
     handler = logging.StreamHandler(stdout)
@@ -179,7 +180,7 @@ class Pmu(object):
 
         self.ieee_command_sample = CommandFrame(7734, 'start', None)
 
-        self.cfg1 = None
+        self.cfg1 = self.ieee_cfg2_sample
         self.cfg2 = self.ieee_cfg2_sample
         self.cfg3 = None
         self.header = HeaderFrame(pmu_id, 'Hi! I am tinyPMU!')
@@ -209,38 +210,34 @@ class Pmu(object):
         self.listener.start()
 
 
-    def set_configuration(self, conifg=None):
+    def set_configuration(self, config=None):
 
         # If none configuration given IEEE sample configuration will be loaded
-        if not conifg:
-            self.cfg1 = None  # TODO: Configuration frame 1
+        if not config:
+            self.cfg1 = self.ieee_cfg2_sample
             self.cfg2 = self.ieee_cfg2_sample
             self.cfg3 = None  # TODO: Configuration frame 3
 
-        elif isinstance(conifg, ConfigFrame1):
-            self.cfg1 = conifg
-            self.cfg2 = None  # TODO: Use ConfigFrame1 to create ConfigFrame2 if possible
-            self.cfg3 = None  # TODO: Use ConfigFrame1 to create ConfigFrame3 if possible
+        elif isinstance(config, ConfigFrame1):
+            self.cfg1 = config
 
-        elif isinstance(conifg, ConfigFrame2):
-            self.cfg1 = None  # TODO: Use ConfigFrame2 to create ConfigFrame1 if possible
-            self.cfg2 = conifg
-            self.cfg3 = None  # TODO: Use ConfigureFrame2 to create ConfigFrame3 if possible
+        elif isinstance(config, ConfigFrame2):
+            self.cfg2 = config
+            if not self.cfg1:  # If CFG-1 not set use current data stream configuration
+                self.cfg1 = config
 
-        elif isinstance(conifg, ConfigFrame3):
-            self.cfg1 = None  # TODO: Use ConfigFrame3 to create ConfigFrame1 if possible
-            self.cfg2 = None  # TODO: Use ConfigFrame3 to create ConfigFrame2 if possible
+        elif isinstance(config, ConfigFrame3):
             self.cfg3 = ConfigFrame3
 
         else:
             raise PmuError('Incorrect configuration!')
 
         # Update data rate and PMU ID if changed:
-        if conifg:
-            self.pmu_id = conifg.pmu_id_code
-            self.data_rate = conifg.data_rate
-            self.data_format = conifg.data_format
-            self.num_pmu = conifg.num_pmu
+        if config:
+            self.pmu_id = config.pmu_id_code
+            self.data_rate = config.data_rate
+            self.data_format = config.data_format
+            self.num_pmu = config.num_pmu
         else:
             self.pmu_id = self.ieee_cfg2_sample.pmu_id_code
             self.data_rate = self.ieee_cfg2_sample.data_rate

@@ -98,6 +98,7 @@ __version__ = "0.1"
 
 
 def list2bytes(int_list, byte_size):
+
     if isinstance(int_list, int):
         return int_list.to_bytes(byte_size, 'big')
 

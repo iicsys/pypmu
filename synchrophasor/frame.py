@@ -1121,7 +1121,7 @@ class ConfigFrame1(CommonFrame):
 
         TYPES = { '0': 'pow', '1': 'rms', '2': 'peak' }
 
-        return TYPES[str(type)], scale
+        return scale, TYPES[str(type)]
 
 
     def set_digital_unit(self, dig_units):
@@ -1431,25 +1431,26 @@ class ConfigFrame1(CommonFrame):
                 channel_names = []
                 start_byte = 46
                 for i in range(phasor_num + analog_num + 16*digital_num):
-                    channel_names[i] = byte_data[start_byte:start_byte+16].decode('ascii')
+                    channel_names.append(byte_data[start_byte:start_byte+16].decode('ascii'))
                     start_byte += 16
 
                 ph_units = []
                 for i in range(phasor_num):
                     ph_unit_int = int.from_bytes(byte_data[start_byte:start_byte+4], byteorder='big', signed=False)
-                    ph_units[i] = ConfigFrame1.int2phunit(ph_unit_int)
+                    ph_units.append(ConfigFrame1.int2phunit(ph_unit_int))
                     start_byte += 4
 
                 an_units = []
                 for i in range(analog_num):
                     an_type = int.from_bytes(byte_data[start_byte:start_byte+1], byteorder='big', signed=False)
                     an_scale = int.from_bytes(byte_data[start_byte+1:start_byte+3], byteorder='big', signed=True)
-                    an_units[i] = ConfigFrame1.int2anunit(an_type, an_scale)
+                    an_units.append(ConfigFrame1.int2anunit(an_type, an_scale))
                     start_byte += 4
 
                 dig_units = []
                 for i in range(digital_num):
-                    dig_units[i] = (byte_data[start_byte:start_byte+2], byte_data[start_byte+2:start_byte+4])
+                    dig_units.append((int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False),
+                                      int.from_bytes(byte_data[start_byte+2:start_byte+4], byteorder='big', signed=False)))
                     start_byte += 4
 
                 fnom = ConfigFrame1.int2fnom(int.from_bytes(byte_data[start_byte:start_byte+2],

@@ -521,6 +521,14 @@ class CommonFrame(metaclass=ABCMeta):
 
         return data_format
 
+    def check_crc(byte_data):
+
+        crc_calculated = crc16xmodem(byte_data[0:-2], 0xffff).to_bytes(2, 'big')  # Calculate CRC
+
+        if byte_data[-2:] != crc_calculated:
+            return False
+
+        return True
 
     @abstractmethod
     def convert2bytes(self, byte_message):
@@ -565,10 +573,7 @@ class CommonFrame(metaclass=ABCMeta):
             5: ConfigFrame3.convert2frame,
         }
 
-        # Check if frame is valid - using CRC (two last bytes)
-        crc_calculated = crc16xmodem(byte_data[0:-2], 0xffff).to_bytes(2, 'big')
-
-        if byte_data[-2:] != crc_calculated:
+        if not CommonFrame.check_crc(byte_data):
             raise FrameError("CRC failed. Frame not valid.")
 
         # Get second byte and determine frame type by shifting right to get higher 4 bits
@@ -1005,6 +1010,18 @@ class ConfigFrame1(CommonFrame):
             return scale
 
 
+    @staticmethod
+    def int2phunit(ph_unit):
+
+        phasor_type = ph_unit & 0xff000000
+        scale = ph_unit & 0x00ffffff
+
+        if phasor_type > 0:  # Current PH unit
+            return scale, 'i'
+        else:
+            return scale, 'v'
+
+
     def set_analog_unit(self, an_units):
         """
         ### set_analog_unit() ###
@@ -1097,6 +1114,14 @@ class ConfigFrame1(CommonFrame):
         if anunit_type == 'peak':
             anunit |= scale
             return anunit ^ (3 << 24)
+
+
+    @staticmethod
+    def int2anunit(type, scale):
+
+        TYPES = { '0': 'pow', '1': 'rms', '2': 'peak' }
+
+        return TYPES[str(type)], scale
 
 
     def set_digital_unit(self, dig_units):
@@ -1251,6 +1276,14 @@ class ConfigFrame1(CommonFrame):
             return 0
 
 
+    @staticmethod
+    def int2fnom(fnom_int):
+
+        if fnom_int == 0:
+            return 60
+        else:
+            return 50
+
     def set_cfg_count(self, cfg_count):
         """
         ### set_cfg_count() ###
@@ -1349,7 +1382,91 @@ class ConfigFrame1(CommonFrame):
 
     @staticmethod
     def convert2frame(byte_data):
-        return byte_data
+
+        try:
+
+            if not CommonFrame.check_crc(byte_data):
+                raise FrameError("CRC failed. Configuration frame not valid.")
+
+            pmu_code = int.from_bytes(byte_data[4:6], byteorder='big', signed=False)
+            soc = int.from_bytes(byte_data[6:10], byteorder='big', signed=False)
+            time_quality_frasec = int.from_bytes(byte_data[10:11], byteorder='big', signed=False)
+
+            # Get bits using masks
+            leap_dir = time_quality_frasec & 0b01000000
+            leap_occ = time_quality_frasec & 0b00100000
+            leap_pen = time_quality_frasec & 0b00010000
+
+            time_quality = time_quality_frasec & 0b00001111
+
+            # Reassign values to create Command frame
+            leap_dir = '-' if leap_dir else '+'
+            leap_occ = bool(leap_occ)
+            leap_pen = bool(leap_pen)
+
+            frasec = int.from_bytes(byte_data[11:14], byteorder='big', signed=False)
+
+            time_base_int = int.from_bytes(byte_data[14:18], byteorder='big', signed=False)
+            time_base = time_base_int & 0x00ffffff  # take only first 24 LSB bits
+
+            num_pmu = int.from_bytes(byte_data[18:20], byteorder='big', signed=False)
+
+            if num_pmu > 1:  # Loop through configurations for each
+
+                pass
+
+            else:
+
+                station_name = byte_data[20:36].decode('ascii')
+
+                id_code = int.from_bytes(byte_data[36:38], byteorder='big', signed=False)
+
+                data_format_int = int.from_bytes(byte_data[38:40], byteorder='big', signed=False)
+                data_fromat = data_format_int & 0x000f  # Take only first 4 LSB bits
+
+                phasor_num = int.from_bytes(byte_data[40:42], byteorder='big', signed=False)
+                analog_num = int.from_bytes(byte_data[42:44], byteorder='big', signed=False)
+                digital_num = int.from_bytes(byte_data[44:46], byteorder='big', signed=False)
+
+                channel_names = []
+                start_byte = 46
+                for i in range(phasor_num + analog_num + 16*digital_num):
+                    channel_names[i] = byte_data[start_byte:start_byte+16].decode('ascii')
+                    start_byte += 16
+
+                ph_units = []
+                for i in range(phasor_num):
+                    ph_unit_int = int.from_bytes(byte_data[start_byte:start_byte+4], byteorder='big', signed=False)
+                    ph_units[i] = ConfigFrame1.int2phunit(ph_unit_int)
+                    start_byte += 4
+
+                an_units = []
+                for i in range(analog_num):
+                    an_type = int.from_bytes(byte_data[start_byte:start_byte+1], byteorder='big', signed=False)
+                    an_scale = int.from_bytes(byte_data[start_byte+1:start_byte+3], byteorder='big', signed=True)
+                    an_units[i] = ConfigFrame1.int2anunit(an_type, an_scale)
+                    start_byte += 4
+
+                dig_units = []
+                for i in range(digital_num):
+                    dig_units[i] = (byte_data[start_byte:start_byte+2], byte_data[start_byte+2:start_byte+4])
+                    start_byte += 4
+
+                fnom = ConfigFrame1.int2fnom(int.from_bytes(byte_data[start_byte:start_byte+2],
+                                                            byteorder='big', signed=False))
+                start_byte += 2
+
+                cfg_count = int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False)
+                start_byte += 2
+
+            data_rate = int.from_bytes(byte_data[-2:-4], byteorder='big', signed=True)
+
+            return ConfigFrame1(pmu_code, time_base, num_pmu, station_name, id_code, data_fromat, phasor_num,
+                                analog_num, digital_num, channel_names, ph_units, an_units, dig_units, fnom, cfg_count,
+                                data_rate, soc, (frasec, leap_dir, leap_occ, leap_pen, time_quality))
+
+        except Exception as error:
+            raise FrameError("Error while creating Config frame: " + str(error))
 
 
 class ConfigFrame2(ConfigFrame1):
@@ -1861,6 +1978,10 @@ class CommandFrame(CommonFrame):
     def convert2frame(byte_data):
 
         try:
+
+            if not CommonFrame.check_crc(byte_data):
+                raise FrameError("CRC failed. Command frame not valid.")
+
             pmu_code = int.from_bytes(byte_data[4:6], byteorder='big', signed=False)
             soc = int.from_bytes(byte_data[6:10], byteorder='big', signed=False)
             time_quality_frasec = int.from_bytes(byte_data[10:11], byteorder='big', signed=False)
@@ -1920,6 +2041,10 @@ class HeaderFrame(CommonFrame):
     @staticmethod
     def convert2frame(byte_data):
         try:
+
+            if not CommonFrame.check_crc(byte_data):
+                raise FrameError("CRC failed. Header frame not valid.")
+
             pmu_code = int.from_bytes(byte_data[4:6], byteorder='big', signed=False)
             soc = int.from_bytes(byte_data[6:10], byteorder='big', signed=False)
             time_quality_frasec = int.from_bytes(byte_data[10:11], byteorder='big', signed=False)

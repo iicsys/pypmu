@@ -234,12 +234,12 @@ class Pmu(object):
 
         # Update data rate and PMU ID if changed:
         if config:
-            self.pmu_id = config.pmu_id_code
+            self.pmu_id = config.get_pmu_id_code()
             self.data_rate = config.data_rate
             self.data_format = config.data_format
             self.num_pmu = config.num_pmu
         else:
-            self.pmu_id = self.ieee_cfg2_sample.pmu_id_code
+            self.pmu_id = self.ieee_cfg2_sample.get_pmu_id_code()
             self.data_rate = self.ieee_cfg2_sample.data_rate
             self.data_format = self.ieee_cfg2_sample.data_format
             self.num_pmu = self.ieee_cfg2_sample.num_pmu

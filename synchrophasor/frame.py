@@ -122,17 +122,20 @@ class CommonFrame(metaclass=ABCMeta):
         if frame_type not in CommonFrame.FRAME_TYPES:
             raise FrameError("Unknown frame type. Possible options: [data, header, cfg1, cfg2, cfg3, cmd].")
         else:
-            self.frame_type = CommonFrame.FRAME_TYPES[frame_type]
+            self._frame_type = CommonFrame.FRAME_TYPES[frame_type]
+
+
+    def get_frame_type(self):
+
+        return CommonFrame.FRAME_TYPES_WORDS[self._frame_type]
 
 
     def extract_frame_type(byte_data):
         """This method will only return type of the frame. It shall be used for stream splitter
         since there is no need to create instance of specific frame which will cause lower performance."""
 
-        # Check if frame is valid - using CRC (two last bytes)
-        crc_calculated = crc16xmodem(byte_data[0:-2], 0xffff).to_bytes(2, 'big')
-
-        if byte_data[-2:] != crc_calculated:
+        # Check if frame is valid
+        if not CommandFrame._check_crc(byte_data):
             raise FrameError("CRC failed. Frame not valid.")
 
         # Get second byte and determine frame type by shifting right to get higher 4 bits
@@ -161,7 +164,11 @@ class CommonFrame(metaclass=ABCMeta):
         if not 1 <= version <= 15:
             raise FrameError("VERSION number out of range. 1<= VERSION <= 15")
         else:
-            self.version = version
+            self._version = version
+
+
+    def get_version(self):
+        return  self._version
 
 
     def set_id_code(self, id_code):
@@ -184,7 +191,12 @@ class CommonFrame(metaclass=ABCMeta):
         if not 1 <= id_code <= 65534:
             raise FrameError("ID CODE out of range. 1 <= ID_CODE <= 65534")
         else:
-            self.pmu_id_code = id_code
+            self._pmu_id_code = id_code
+
+
+    def get_id_code(self):
+
+        return self._pmu_id_code
 
 
     def set_time(self, soc=None, frasec=None):
@@ -248,7 +260,12 @@ class CommonFrame(metaclass=ABCMeta):
         if not 0 <= soc <= 4294967295:
             raise FrameError("Time stamp out of range. 0 <= SOC <= 4294967295")
         else:
-            self.soc = soc
+            self._soc = soc
+
+
+    def get_soc(self):
+
+        return self._soc
 
 
     def set_frasec(self, fr_seconds, leap_dir='+', leap_occ=False, leap_pen=False, time_quality=0):
@@ -350,10 +367,15 @@ class CommonFrame(metaclass=ABCMeta):
 
         frasec |= fr_seconds  # Bits 23-0: Fraction of second.
 
-        self.frasec = frasec
+        self._frasec = frasec
 
 
-    def get_data_format_size(data_format):
+    def get_frasec(self):
+
+        return self._frasec  # TODO: Implement according to set_frasec method
+
+
+    def _get_data_format_size(data_format):
         """
         ### get_data_format() ###
 
@@ -460,7 +482,7 @@ class CommonFrame(metaclass=ABCMeta):
             data_formats = []  # Format tuples transformed to ints
             for format_type in data_format:
                 if isinstance(format_type, tuple):  # If data formats are specified as tuples then convert them to ints
-                    data_formats.append(CommonFrame.format2int(*format_type))
+                    data_formats.append(CommonFrame._format2int(*format_type))
                 else:
                     if not 0 <= format_type <= 15:  # If data formats are specified as ints check range
                         raise FrameError("Format Type out of range. 0 <= FORMAT <= 15")
@@ -470,14 +492,14 @@ class CommonFrame(metaclass=ABCMeta):
                 self.data_format = data_formats
         else:
             if isinstance(data_format, tuple):
-                self.data_format = CommonFrame.format2int(*data_format)
+                self.data_format = CommonFrame._format2int(*data_format)
             else:
                 if not 0 <= data_format <= 15:
                     raise FrameError("Format Type out of range. 0 <= FORMAT <= 15")
                 self.data_format = data_format
 
 
-    def format2int(phasor_polar=False, phasor_float=False, analogs_float=False, freq_float=False):
+    def _format2int(phasor_polar=False, phasor_float=False, analogs_float=False, freq_float=False):
         """
         ### format2int() ###
 
@@ -521,7 +543,8 @@ class CommonFrame(metaclass=ABCMeta):
 
         return data_format
 
-    def check_crc(byte_data):
+    @staticmethod
+    def _check_crc(byte_data):
 
         crc_calculated = crc16xmodem(byte_data[0:-2], 0xffff).to_bytes(2, 'big')  # Calculate CRC
 
@@ -534,26 +557,26 @@ class CommonFrame(metaclass=ABCMeta):
     def convert2bytes(self, byte_message):
 
         # SYNC word in CommonFrame starting with AA hex word + frame type + version
-        sync_b = (0xaa << 8) | (self.frame_type << 4) | self.version
+        sync_b = (0xaa << 8) | (self._frame_type << 4) | self._version
         sync_b = sync_b.to_bytes(2, 'big')
 
         # FRAMESIZE: 2B SYNC + 2B FRAMESIZE + 2B IDCODE + 4B SOC + 4B FRASEC + len(Command) + 2B CHK
         frame_size_b = (16 + len(byte_message)).to_bytes(2, 'big')
 
         # PMU ID CODE
-        pmu_id_code_b = self.pmu_id_code.to_bytes(2, 'big')
+        pmu_id_code_b = self._pmu_id_code.to_bytes(2, 'big')
 
         # If timestamp not given set timestamp
         if not hasattr(self, 'soc') and not hasattr(self, 'frasec'):
             self.set_time()
-        elif not self.soc and not self.frasec:
+        elif not self._soc and not self._frasec:
             self.set_time()
 
         # SOC
-        soc_b = self.soc.to_bytes(4, 'big')
+        soc_b = self._soc.to_bytes(4, 'big')
 
         # FRASEC
-        frasec_b = self.frasec.to_bytes(4, 'big')
+        frasec_b = self._frasec.to_bytes(4, 'big')
 
         # CHK
         crc_chk_b = crc16xmodem(sync_b + frame_size_b + pmu_id_code_b + soc_b + frasec_b + byte_message, 0xffff)
@@ -573,7 +596,7 @@ class CommonFrame(metaclass=ABCMeta):
             5: ConfigFrame3.convert2frame,
         }
 
-        if not CommonFrame.check_crc(byte_data):
+        if not CommonFrame._check_crc(byte_data):
             raise FrameError("CRC failed. Frame not valid.")
 
         # Get second byte and determine frame type by shifting right to get higher 4 bits
@@ -956,7 +979,7 @@ class ConfigFrame1(CommonFrame):
 
                 ph_values = []
                 for ph_tuple in ph_unit:
-                    ph_values.append(ConfigFrame1.phunit2int(*ph_tuple))
+                    ph_values.append(ConfigFrame1._phunit2int(*ph_tuple))
 
                 phunit_list.append(ph_values)
 
@@ -965,10 +988,10 @@ class ConfigFrame1(CommonFrame):
             if not all(isinstance(el, tuple) for el in ph_units) or self.phasor_num != len(ph_units):
                 raise FrameError("Provide PHUNIT as list of tuples with PHNMR elements. Ex: [(1234,'u'),(1234, 'i')]")
 
-            self.ph_units = [ConfigFrame1.phunit2int(*phun) for phun in ph_units]
+            self.ph_units = [ConfigFrame1._phunit2int(*phun) for phun in ph_units]
 
 
-    def phunit2int(scale, phasor_type='v'):
+    def _phunit2int(scale, phasor_type='v'):
         """
         ### phunit2int() ###
 
@@ -1011,7 +1034,7 @@ class ConfigFrame1(CommonFrame):
 
 
     @staticmethod
-    def int2phunit(ph_unit):
+    def _int2phunit(ph_unit):
 
         phasor_type = ph_unit & 0xff000000
         scale = ph_unit & 0x00ffffff
@@ -1055,7 +1078,7 @@ class ConfigFrame1(CommonFrame):
 
                 an_values = []
                 for an_tuple in an_unit:
-                    an_values.append(ConfigFrame1.anunit2int(*an_tuple))
+                    an_values.append(ConfigFrame1._anunit2int(*an_tuple))
 
                 anunit_list.append(an_values)
 
@@ -1065,10 +1088,10 @@ class ConfigFrame1(CommonFrame):
                 raise FrameError("Provide ANUNIT as list of tuples with ANNMR elements. "
                                  "Ex: [(1234,'pow'),(1234, 'rms')]")
 
-            self.an_units = [ConfigFrame1.anunit2int(*anun) for anun in an_units]
+            self.an_units = [ConfigFrame1._anunit2int(*anun) for anun in an_units]
 
 
-    def anunit2int(scale, anunit_type='pow'):
+    def _anunit2int(scale, anunit_type='pow'):
         """
         ### anunit2int() ###
 
@@ -1117,7 +1140,7 @@ class ConfigFrame1(CommonFrame):
 
 
     @staticmethod
-    def int2anunit(type, scale):
+    def _int2anunit(type, scale):
 
         TYPES = { '0': 'pow', '1': 'rms', '2': 'peak' }
 
@@ -1163,7 +1186,7 @@ class ConfigFrame1(CommonFrame):
 
                 dig_values = []
                 for dig_tuple in dig_unit:
-                    dig_values.append(ConfigFrame1.digunit2int(*dig_tuple))
+                    dig_values.append(ConfigFrame1._digunit2int(*dig_tuple))
 
                 digunit_list.append(dig_values)
 
@@ -1173,10 +1196,10 @@ class ConfigFrame1(CommonFrame):
                 raise FrameError("Provide DIGUNIT as list of tuples with DGNMR elements. "
                                  "Ex: [(0x0000,0xffff),(0x0011, 0xff0f)]")
 
-            self.dig_units = [ConfigFrame1.digunit2int(*dgun) for dgun in dig_units]
+            self.dig_units = [ConfigFrame1._digunit2int(*dgun) for dgun in dig_units]
 
 
-    def digunit2int(first_mask, second_mask):
+    def _digunit2int(first_mask, second_mask):
         """
         ### digunit2int() ###
 
@@ -1236,15 +1259,15 @@ class ConfigFrame1(CommonFrame):
 
             fnom_list = []
             for fnom in f_nom:
-                fnom_list.append(ConfigFrame1.fnom2int(fnom))
+                fnom_list.append(ConfigFrame1._fnom2int(fnom))
 
             self.f_nom = fnom_list
 
         else:
-            self.f_nom = ConfigFrame1.fnom2int(f_nom)
+            self.f_nom = ConfigFrame1._fnom2int(f_nom)
 
 
-    def fnom2int(fnom=60):
+    def _fnom2int(fnom=60):
         """
         ### fnom2int() ###
 
@@ -1277,7 +1300,7 @@ class ConfigFrame1(CommonFrame):
 
 
     @staticmethod
-    def int2fnom(fnom_int):
+    def _int2fnom(fnom_int):
 
         if fnom_int == 0:
             return 60
@@ -1385,7 +1408,7 @@ class ConfigFrame1(CommonFrame):
 
         try:
 
-            if not CommonFrame.check_crc(byte_data):
+            if not CommonFrame._check_crc(byte_data):
                 raise FrameError("CRC failed. Configuration frame not valid.")
 
             pmu_code = int.from_bytes(byte_data[4:6], byteorder='big', signed=False)
@@ -1449,7 +1472,7 @@ class ConfigFrame1(CommonFrame):
                     stream_ph_units = []
                     for _ in range(phasor_num[i]):
                         ph_unit = int.from_bytes(byte_data[start_byte:start_byte+4], byteorder='big', signed=False)
-                        stream_ph_units.append(ConfigFrame1.int2phunit(ph_unit))
+                        stream_ph_units.append(ConfigFrame1._int2phunit(ph_unit))
                         start_byte += 4
 
                     ph_units.append(stream_ph_units)
@@ -1458,7 +1481,7 @@ class ConfigFrame1(CommonFrame):
                     for _ in range(analog_num[i]):
                         an_type = int.from_bytes(byte_data[start_byte:start_byte+1], byteorder='big', signed=False)
                         an_scale = int.from_bytes(byte_data[start_byte+1:start_byte+3], byteorder='big', signed=True)
-                        stream_an_units.append(ConfigFrame1.int2anunit(an_type, an_scale))
+                        stream_an_units.append(ConfigFrame1._int2anunit(an_type, an_scale))
                         start_byte += 4
 
                     an_units.append(stream_an_units)
@@ -1472,8 +1495,8 @@ class ConfigFrame1(CommonFrame):
 
                     dig_units.append(stream_dig_units)
 
-                    fnom.append(ConfigFrame1.int2fnom(int.from_bytes(byte_data[start_byte:start_byte+2],
-                                                                     byteorder='big', signed=False)))
+                    fnom.append(ConfigFrame1._int2fnom(int.from_bytes(byte_data[start_byte:start_byte + 2],
+                                                                      byteorder='big', signed=False)))
                     start_byte += 2
 
                     cfg_count.append(int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False))
@@ -1508,14 +1531,14 @@ class ConfigFrame1(CommonFrame):
                 ph_units = []
                 for _ in range(phasor_num):
                     ph_unit_int = int.from_bytes(byte_data[start_byte:start_byte+4], byteorder='big', signed=False)
-                    ph_units.append(ConfigFrame1.int2phunit(ph_unit_int))
+                    ph_units.append(ConfigFrame1._int2phunit(ph_unit_int))
                     start_byte += 4
 
                 an_units = []
                 for _ in range(analog_num):
                     an_type = int.from_bytes(byte_data[start_byte:start_byte+1], byteorder='big', signed=False)
                     an_scale = int.from_bytes(byte_data[start_byte+1:start_byte+3], byteorder='big', signed=True)
-                    an_units.append(ConfigFrame1.int2anunit(an_type, an_scale))
+                    an_units.append(ConfigFrame1._int2anunit(an_type, an_scale))
                     start_byte += 4
 
                 dig_units = []
@@ -1524,8 +1547,8 @@ class ConfigFrame1(CommonFrame):
                                       int.from_bytes(byte_data[start_byte+2:start_byte+4], byteorder='big', signed=False)))
                     start_byte += 4
 
-                fnom = ConfigFrame1.int2fnom(int.from_bytes(byte_data[start_byte:start_byte+2],
-                                                            byteorder='big', signed=False))
+                fnom = ConfigFrame1._int2fnom(int.from_bytes(byte_data[start_byte:start_byte + 2],
+                                                             byteorder='big', signed=False))
                 start_byte += 2
 
                 cfg_count = int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False)
@@ -1681,7 +1704,7 @@ class DataFrame(CommonFrame):
             for stat_el in stat:
                 # If stat is specified as tuple then convert them to int
                 if isinstance(stat_el, tuple):
-                    stats.append(DataFrame.stat2int(*stat_el))
+                    stats.append(DataFrame._stat2int(*stat_el))
                 else:
                     # If data formats are specified as ints check range
                     if not 0 <= stat_el <= 65536:
@@ -1692,7 +1715,7 @@ class DataFrame(CommonFrame):
                 self.stat = stats
         else:
             if isinstance(stat, tuple):
-                self.stat = DataFrame.stat2int(*stat)
+                self.stat = DataFrame._stat2int(*stat)
             else:
                 if not 0 <= stat <= 65536:
                     raise ValueError("STAT out of range. 0 <= STAT <= 65536")
@@ -1701,8 +1724,8 @@ class DataFrame(CommonFrame):
 
 
     # STAT: TODO: Document Table 7. and unlocked time
-    def stat2int(measurement_status='ok', sync=True, sorting='timestamp', trigger=False, cfg_change=False,
-                 modified=False, time_quality=5, unlocked='<10', trigger_reason=0):
+    def _stat2int(measurement_status='ok', sync=True, sorting='timestamp', trigger=False, cfg_change=False,
+                  modified=False, time_quality=5, unlocked='<10', trigger_reason=0):
 
         stat = DataFrame.MEASUREMENT_STATUS[measurement_status] << 2
         if not sync:
@@ -1752,17 +1775,17 @@ class DataFrame(CommonFrame):
                 ph_measurements = []
                 # TODO: Add phasor_num to check length of phasor list
                 for phasor_measurement in phasor:
-                    ph_measurements.append(DataFrame.phasor2int(phasor_measurement, self.data_format[i]))
+                    ph_measurements.append(DataFrame._phasor2int(phasor_measurement, self.data_format[i]))
 
                 phasors_list.append(ph_measurements)
         else:
             for phasor_measurement in phasors:
-                phasors_list.append(DataFrame.phasor2int(phasor_measurement, self.data_format))
+                phasors_list.append(DataFrame._phasor2int(phasor_measurement, self.data_format))
 
         self.phasors = phasors_list
 
 
-    def phasor2int(phasor, data_format):
+    def _phasor2int(phasor, data_format):
 
         if not isinstance(phasor, tuple):
             raise TypeError("Provide phasor measurement as tuple. Rectangular - (Re, Im); Polar - (Mg, An).")
@@ -1828,14 +1851,14 @@ class DataFrame(CommonFrame):
 
             freq_list = []  # Format tuples transformed to ints
             for i, fr in enumerate(freq):
-                freq_list.append(DataFrame.freq2int(fr, self.data_format[i]))
+                freq_list.append(DataFrame._freq2int(fr, self.data_format[i]))
 
             self.freq = freq_list
         else:
-            self.freq = DataFrame.freq2int(freq, self.data_format)
+            self.freq = DataFrame._freq2int(freq, self.data_format)
 
 
-    def freq2int(freq, data_format):
+    def _freq2int(freq, data_format):
 
         # Check if third bit in data_format is 1 -> floating point representation
         if (data_format & 8) != 0:
@@ -1859,14 +1882,14 @@ class DataFrame(CommonFrame):
 
             dfreq_list = []  # Format tuples transformed to ints
             for i, dfr in enumerate(dfreq):
-                dfreq_list.append(DataFrame.dfreq2int(dfr, self.data_format[i]))
+                dfreq_list.append(DataFrame._dfreq2int(dfr, self.data_format[i]))
 
             self.dfreq = dfreq_list
         else:
-            self.dfreq = DataFrame.dfreq2int(dfreq, self.data_format)
+            self.dfreq = DataFrame._dfreq2int(dfreq, self.data_format)
 
 
-    def dfreq2int(dfreq, data_format):
+    def _dfreq2int(dfreq, data_format):
 
         # Check if third bit in data_format is 1 -> floating point representation
         if (data_format & 8) != 0:
@@ -1894,18 +1917,18 @@ class DataFrame(CommonFrame):
                 an_measurements = []
                 # TODO: Add analog_num to check length of analog list
                 for analog_measurement in an:
-                    an_measurements.append(DataFrame.analog2int(analog_measurement, self.data_format[i]))
+                    an_measurements.append(DataFrame._analog2int(analog_measurement, self.data_format[i]))
 
                 analog_list.append(an_measurements)
 
         else:
             for analog_measurement in analog:
-                analog_list.append(DataFrame.analog2int(analog_measurement, self.data_format))
+                analog_list.append(DataFrame._analog2int(analog_measurement, self.data_format))
 
         self.analog = analog_list
 
 
-    def analog2int(analog, data_format):
+    def _analog2int(analog, data_format):
 
         # Check if third bit in data_format is 1 -> floating point representation
         if (data_format & 4) != 0:
@@ -1930,18 +1953,18 @@ class DataFrame(CommonFrame):
                 dig_measurements = []
                 # TODO: Add digital_num to check length of dig list
                 for digital_measurement in dig:
-                    dig_measurements.append(DataFrame.digital2int(digital_measurement))
+                    dig_measurements.append(DataFrame._digital2int(digital_measurement))
 
                 digital_list.append(dig_measurements)
 
         else:
             for digital_measurement in digital:
-                digital_list.append(DataFrame.digital2int(digital_measurement))
+                digital_list.append(DataFrame._digital2int(digital_measurement))
 
         self.digital = digital_list
 
 
-    def digital2int(digital):
+    def _digital2int(digital):
 
         if not -32767 <= digital <= 65535:
             raise ValueError("DIGITAL must be 16 bit word. -32767 <= DIGITAL <= 65535.")
@@ -1953,7 +1976,7 @@ class DataFrame(CommonFrame):
         # Convert DataFrame message to bytes
         if not self.num_measurements > 1:
 
-            data_format_size = CommonFrame.get_data_format_size(self.data_format)
+            data_format_size = CommonFrame._get_data_format_size(self.data_format)
 
             df_b = self.stat.to_bytes(2, 'big') + list2bytes(self.phasors, data_format_size['phasor']) + \
                    self.freq.to_bytes(data_format_size['freq'], 'big') + \
@@ -1964,7 +1987,7 @@ class DataFrame(CommonFrame):
             df_b = None
             for i in range(self.num_measurements):
 
-                data_format_size = CommonFrame.get_data_format_size(self.data_format[i])
+                data_format_size = CommonFrame._get_data_format_size(self.data_format[i])
 
                 df_b_i = self.stat[i].to_bytes(2, 'big') + \
                          list2bytes(self.phasors[i], data_format_size['phasor']) + \
@@ -2007,14 +2030,14 @@ class CommandFrame(CommonFrame):
         if command in CommandFrame.COMMANDS:
             self.command = CommandFrame.COMMANDS[command]
         else:
-            self.command = CommandFrame.command2int(command)
+            self.command = CommandFrame._command2int(command)
 
 
     def get_command(self):
         return CommandFrame.COMMAND_WORDS[self.command]
 
 
-    def command2int(command):
+    def _command2int(command):
 
         if not 0 <= command <= 65535:
             raise ValueError("Undesignated command code must be 16bit word. 0 <= COMMAND <= 65535")
@@ -2025,10 +2048,10 @@ class CommandFrame(CommonFrame):
     def set_extended_frame(self, extended_frame):
 
         if extended_frame is not None:
-            self.extended_frame = CommandFrame.extended2int(extended_frame)
+            self.extended_frame = CommandFrame._extended2int(extended_frame)
 
 
-    def extended2int(extended_frame):
+    def _extended2int(extended_frame):
 
         if len(extended_frame) > 65518:
             raise ValueError("Extended frame size to large. len(EXTENDED_FRAME) < 65518")
@@ -2051,7 +2074,7 @@ class CommandFrame(CommonFrame):
 
         try:
 
-            if not CommonFrame.check_crc(byte_data):
+            if not CommonFrame._check_crc(byte_data):
                 raise FrameError("CRC failed. Command frame not valid.")
 
             pmu_code = int.from_bytes(byte_data[4:6], byteorder='big', signed=False)
@@ -2114,7 +2137,7 @@ class HeaderFrame(CommonFrame):
     def convert2frame(byte_data):
         try:
 
-            if not CommonFrame.check_crc(byte_data):
+            if not CommonFrame._check_crc(byte_data):
                 raise FrameError("CRC failed. Header frame not valid.")
 
             pmu_code = int.from_bytes(byte_data[4:6], byteorder='big', signed=False)

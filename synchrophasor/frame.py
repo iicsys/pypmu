@@ -227,7 +227,7 @@ class CommonFrame(metaclass=ABCMeta):
         if soc:
             self.set_soc(soc)
         else:
-            self.set_soc(int())  # Get current timestamp
+            self.set_soc(int(t))  # Get current timestamp
 
         if frasec:
             if isinstance(frasec, collections.Sequence):
@@ -489,14 +489,19 @@ class CommonFrame(metaclass=ABCMeta):
                     else:
                         data_formats.append(format_type)
 
-                self.data_format = data_formats
+                self._data_format = data_formats
         else:
             if isinstance(data_format, tuple):
-                self.data_format = CommonFrame._format2int(*data_format)
+                self._data_format = CommonFrame._format2int(*data_format)
             else:
                 if not 0 <= data_format <= 15:
                     raise FrameError("Format Type out of range. 0 <= FORMAT <= 15")
-                self.data_format = data_format
+                self._data_format = data_format
+
+
+    def get_data_format(self):
+
+        return self._data_format
 
 
     def _format2int(phasor_polar=False, phasor_float=False, analogs_float=False, freq_float=False):
@@ -567,7 +572,7 @@ class CommonFrame(metaclass=ABCMeta):
         pmu_id_code_b = self._pmu_id_code.to_bytes(2, 'big')
 
         # If timestamp not given set timestamp
-        if not hasattr(self, 'soc') and not hasattr(self, 'frasec'):
+        if not hasattr(self, '_soc') and not hasattr(self, '_frasec'):
             self.set_time()
         elif not self._soc and not self._frasec:
             self.set_time()
@@ -663,15 +668,15 @@ class ConfigFrame1(CommonFrame):
         self.set_time_base(time_base)
         self.set_num_pmu(num_pmu)
         self.set_stn_names(station_name)
-        self.set_config_id_code(id_code)
+        self.set_stream_id_code(id_code)
         self.set_data_format(data_format, num_pmu)
         self.set_phasor_num(phasor_num)
         self.set_analog_num(analog_num)
         self.set_digital_num(digital_num)
         self.set_channel_names(channel_names)
-        self.set_phasor_unit(ph_units)
-        self.set_analog_unit(an_units)
-        self.set_digital_unit(dig_units)
+        self.set_phasor_units(ph_units)
+        self.set_analog_units(an_units)
+        self.set_digital_units(dig_units)
         self.set_fnom(f_nom)
         self.set_cfg_count(cfg_count)
         self.set_data_rate(data_rate)
@@ -700,7 +705,12 @@ class ConfigFrame1(CommonFrame):
         if not 1 <= time_base <= 16777215:
             raise FrameError("Time Base out of range. 1 <= TIME_BASE <= 16777215 ")
         else:
-            self.time_base = time_base
+            self._time_base = time_base
+
+
+    def get_time_base(self):
+
+        return self._time_base
 
 
     def set_num_pmu(self, num_pmu):
@@ -728,8 +738,18 @@ class ConfigFrame1(CommonFrame):
         if not 1 <= num_pmu <= 65535:
             raise FrameError("Number of PMUs out of range. 1 <= NUM_PMU <= 65535")
         else:
-            self.num_pmu = num_pmu
-            self.multistreaming = True if num_pmu > 1 else False
+            self._num_pmu = num_pmu
+            self._multistreaming = True if num_pmu > 1 else False
+
+
+    def get_num_pmu(self):
+
+        return self._num_pmu
+
+
+    def is_multistreaming(self):
+
+        return self._multistreaming
 
 
     def set_stn_names(self, station_name):
@@ -753,16 +773,21 @@ class ConfigFrame1(CommonFrame):
 
         """
 
-        if self.multistreaming:
-            if not isinstance(station_name, list) or self.num_pmu != len(station_name):
+        if self._multistreaming:
+            if not isinstance(station_name, list) or self._num_pmu != len(station_name):
                 raise FrameError("When NUM_PMU > 1 provide station names as list with NUM_PMU elements.")
 
-            self.station_name = [station[:16].ljust(16, ' ') for station in station_name]
+            self._station_name = [station[:16].ljust(16, ' ') for station in station_name]
         else:
-            self.station_name = station_name[:16].ljust(16, ' ')
+            self._station_name = station_name[:16].ljust(16, ' ')
 
 
-    def set_config_id_code(self, id_code):
+    def get_station_name(self):
+
+        return self._station_name
+
+
+    def set_stream_id_code(self, id_code):
         """
         ### set_config_id_code() ###
 
@@ -784,8 +809,8 @@ class ConfigFrame1(CommonFrame):
 
         """
 
-        if self.multistreaming:
-            if not isinstance(id_code, list) or self.num_pmu != len(id_code):
+        if self._multistreaming:
+            if not isinstance(id_code, list) or self._num_pmu != len(id_code):
                 raise FrameError("When NUM_PMU > 1 provide PMU ID codes as list with NUM_PMU elements.")
 
             for stream_id in id_code:
@@ -795,7 +820,12 @@ class ConfigFrame1(CommonFrame):
             if not 1 <= id_code <= 65534:
                 raise FrameError("ID CODE out of range. 1 <= ID_CODE <= 65534")
 
-        self.id_code = id_code
+        self._id_code = id_code
+
+
+    def get_stream_id_code(self):
+
+        return self._id_code
 
 
     def set_phasor_num(self, phasor_num):
@@ -820,8 +850,8 @@ class ConfigFrame1(CommonFrame):
 
         """
 
-        if self.multistreaming:
-            if not isinstance(phasor_num, list) or self.num_pmu != len(phasor_num):
+        if self._multistreaming:
+            if not isinstance(phasor_num, list) or self._num_pmu != len(phasor_num):
                 raise FrameError("When NUM_PMU > 1 provide PHNMR as list with NUM_PMU elements.")
 
             for phnmr in phasor_num:
@@ -831,7 +861,12 @@ class ConfigFrame1(CommonFrame):
             if not 0 <= phasor_num <= 65535:
                 raise FrameError("Number of phasors out of range. 0 <= PHNMR <= 65535")
 
-        self.phasor_num = phasor_num
+        self._phasor_num = phasor_num
+
+
+    def get_phasor_num(self):
+
+        return self._phasor_num
 
 
     def set_analog_num(self, analog_num):
@@ -856,8 +891,8 @@ class ConfigFrame1(CommonFrame):
 
         """
 
-        if self.multistreaming:
-            if not isinstance(analog_num, list) or self.num_pmu != len(analog_num):
+        if self._multistreaming:
+            if not isinstance(analog_num, list) or self._num_pmu != len(analog_num):
                 raise FrameError("When NUM_PMU > 1 provide ANNMR as list with NUM_PMU elements.")
 
             for annmr in analog_num:
@@ -867,7 +902,12 @@ class ConfigFrame1(CommonFrame):
             if not 0 <= analog_num <= 65535:
                 raise FrameError("Number of phasors out of range. 0 <= ANNMR <= 65535")
 
-        self.analog_num = analog_num
+        self._analog_num = analog_num
+
+
+    def get_analog_num(self):
+
+        return self._analog_num
 
 
     def set_digital_num(self, digital_num):
@@ -891,8 +931,8 @@ class ConfigFrame1(CommonFrame):
         When ``digital_num`` value is out of range.
 
         """
-        if self.multistreaming:
-            if not isinstance(digital_num, list) or self.num_pmu != len(digital_num):
+        if self._multistreaming:
+            if not isinstance(digital_num, list) or self._num_pmu != len(digital_num):
                 raise FrameError("When NUM_PMU > 1 provide DGNMR as list with NUM_PMU elements.")
 
             for dgnmr in digital_num:
@@ -902,7 +942,12 @@ class ConfigFrame1(CommonFrame):
             if not 0 <= digital_num <= 65535:
                 raise FrameError("Number of phasors out of range. 0 <= DGNMR <= 65535")
 
-        self.digital_num = digital_num
+        self._digital_num = digital_num
+
+
+    def get_digital_num(self):
+
+        return self._digital_num
 
 
     def set_channel_names(self, channel_names):
@@ -926,30 +971,35 @@ class ConfigFrame1(CommonFrame):
 
         """
 
-        if self.multistreaming:
-            if not all(isinstance(el, list) for el in channel_names) or self.num_pmu != len(channel_names):
+        if self._multistreaming:
+            if not all(isinstance(el, list) for el in channel_names) or self._num_pmu != len(channel_names):
                 raise FrameError("When NUM_PMU > 1 provide CHNAM as list of lists with NUM_PMU elements.")
 
             channel_name_list = []
             for i, chnam in enumerate(channel_names):
                 # Channel names must be list with PHNMR + ANNMR + 16*DGNMR elements. Each bit in one digital word
                 # (16bit) has it's own label.
-                if (self.phasor_num[i] + self.analog_num[i] + 16 * self.digital_num[i]) != len(chnam):
+                if (self._phasor_num[i] + self._analog_num[i] + 16 * self._digital_num[i]) != len(chnam):
                     raise FrameError('Provide CHNAM as list with PHNMR + ANNMR + 16*DGNMR elements for each stream.')
                 channel_name_list.append([chn[:16].ljust(16, ' ') for chn in chnam])
 
-            self.channel_names = channel_name_list
+            self._channel_names = channel_name_list
         else:
             if not isinstance(channel_names, list) or \
-                            (self.phasor_num + self.analog_num + 16 * self.digital_num) != len(channel_names):
+                            (self._phasor_num + self._analog_num + 16 * self._digital_num) != len(channel_names):
                 raise FrameError("Provide CHNAM as list with PHNMR + ANNMR + 16*DGNMR elements.")
 
-            self.channel_names = [channel[:16].ljust(16, ' ') for channel in channel_names]
+            self._channel_names = [channel[:16].ljust(16, ' ') for channel in channel_names]
 
 
-    def set_phasor_unit(self, ph_units):
+    def get_channel_names(self):
+
+        return self._channel_names
+
+
+    def set_phasor_units(self, ph_units):
         """
-        ### set_phasor_unit() ###
+        ### set_phasor_units() ###
 
         Setter for phasor channels conversion factor.
 
@@ -967,13 +1017,13 @@ class ConfigFrame1(CommonFrame):
 
         """
 
-        if self.multistreaming:
-            if not all(isinstance(el, list) for el in ph_units) or self.num_pmu != len(ph_units):
+        if self._multistreaming:
+            if not all(isinstance(el, list) for el in ph_units) or self._num_pmu != len(ph_units):
                 raise FrameError("When NUM_PMU > 1 provide PHUNIT as list of lists.")
 
             phunit_list = []
             for i, ph_unit in enumerate(ph_units):
-                if not all(isinstance(el, tuple) for el in ph_unit) or self.phasor_num[i] != len(ph_unit):
+                if not all(isinstance(el, tuple) for el in ph_unit) or self._phasor_num[i] != len(ph_unit):
                     raise FrameError("Provide PHUNIT as list of tuples with PHNMR elements. "
                                      "Ex: [(1234,'u'),(1234, 'i')]")
 
@@ -983,12 +1033,17 @@ class ConfigFrame1(CommonFrame):
 
                 phunit_list.append(ph_values)
 
-            self.ph_units = phunit_list
+            self._ph_units = phunit_list
         else:
-            if not all(isinstance(el, tuple) for el in ph_units) or self.phasor_num != len(ph_units):
+            if not all(isinstance(el, tuple) for el in ph_units) or self._phasor_num != len(ph_units):
                 raise FrameError("Provide PHUNIT as list of tuples with PHNMR elements. Ex: [(1234,'u'),(1234, 'i')]")
 
-            self.ph_units = [ConfigFrame1._phunit2int(*phun) for phun in ph_units]
+            self._ph_units = [ConfigFrame1._phunit2int(*phun) for phun in ph_units]
+
+
+    def get_ph_units(self):
+
+        return self._ph_units
 
 
     def _phunit2int(scale, phasor_type='v'):
@@ -1045,9 +1100,9 @@ class ConfigFrame1(CommonFrame):
             return scale, 'v'
 
 
-    def set_analog_unit(self, an_units):
+    def set_analog_units(self, an_units):
         """
-        ### set_analog_unit() ###
+        ### set_analog_units() ###
 
         Setter for analog channels conversion factor.
 
@@ -1066,13 +1121,13 @@ class ConfigFrame1(CommonFrame):
 
         """
 
-        if self.multistreaming:
-            if not all(isinstance(el, list) for el in an_units) or self.num_pmu != len(an_units):
+        if self._multistreaming:
+            if not all(isinstance(el, list) for el in an_units) or self._num_pmu != len(an_units):
                 raise FrameError("When NUM_PMU > 1 provide ANUNIT as list of lists.")
 
             anunit_list = []
             for i, an_unit in enumerate(an_units):
-                if not all(isinstance(el, tuple) for el in an_unit) or self.analog_num[i] != len(an_unit):
+                if not all(isinstance(el, tuple) for el in an_unit) or self._analog_num[i] != len(an_unit):
                     raise FrameError("Provide ANUNIT as list of tuples with ANNMR elements. "
                                      "Ex: [(1234,'pow'),(1234, 'rms')]")
 
@@ -1082,13 +1137,18 @@ class ConfigFrame1(CommonFrame):
 
                 anunit_list.append(an_values)
 
-            self.an_units = anunit_list
+            self._an_units = anunit_list
         else:
-            if not all(isinstance(el, tuple) for el in an_units) or self.analog_num != len(an_units):
+            if not all(isinstance(el, tuple) for el in an_units) or self._analog_num != len(an_units):
                 raise FrameError("Provide ANUNIT as list of tuples with ANNMR elements. "
                                  "Ex: [(1234,'pow'),(1234, 'rms')]")
 
-            self.an_units = [ConfigFrame1._anunit2int(*anun) for anun in an_units]
+            self._an_units = [ConfigFrame1._anunit2int(*anun) for anun in an_units]
+
+
+    def get_analog_units(self):
+
+        return self._an_units
 
 
     def _anunit2int(scale, anunit_type='pow'):
@@ -1147,9 +1207,9 @@ class ConfigFrame1(CommonFrame):
         return scale, TYPES[str(type)]
 
 
-    def set_digital_unit(self, dig_units):
+    def set_digital_units(self, dig_units):
         """
-        ### set_digital_unit() ###
+        ### set_digital_units() ###
 
         Setter for mask words for digital status words.
 
@@ -1174,13 +1234,13 @@ class ConfigFrame1(CommonFrame):
 
         """
 
-        if self.multistreaming:
-            if not all(isinstance(el, list) for el in dig_units) or self.num_pmu != len(dig_units):
+        if self._multistreaming:
+            if not all(isinstance(el, list) for el in dig_units) or self._num_pmu != len(dig_units):
                 raise FrameError("When NUM_PMU > 1 provide DIGUNIT as list of lists.")
 
             digunit_list = []
             for i, dig_unit in enumerate(dig_units):
-                if not all(isinstance(el, tuple) for el in dig_unit) or self.digital_num[i] != len(dig_unit):
+                if not all(isinstance(el, tuple) for el in dig_unit) or self._digital_num[i] != len(dig_unit):
                     raise FrameError("Provide DIGUNIT as list of tuples with DGNMR elements. "
                                      "Ex: [(0x0000,0xffff),(0x0011, 0xff0f)]")
 
@@ -1190,13 +1250,18 @@ class ConfigFrame1(CommonFrame):
 
                 digunit_list.append(dig_values)
 
-            self.dig_units = digunit_list
+            self._dig_units = digunit_list
         else:
-            if not all(isinstance(el, tuple) for el in dig_units) or self.digital_num != len(dig_units):
+            if not all(isinstance(el, tuple) for el in dig_units) or self._digital_num != len(dig_units):
                 raise FrameError("Provide DIGUNIT as list of tuples with DGNMR elements. "
                                  "Ex: [(0x0000,0xffff),(0x0011, 0xff0f)]")
 
-            self.dig_units = [ConfigFrame1._digunit2int(*dgun) for dgun in dig_units]
+            self._dig_units = [ConfigFrame1._digunit2int(*dgun) for dgun in dig_units]
+
+
+    def get_digital_units(self):
+
+        return self._dig_units
 
 
     def _digunit2int(first_mask, second_mask):
@@ -1253,18 +1318,23 @@ class ConfigFrame1(CommonFrame):
 
         """
 
-        if self.multistreaming:
-            if not isinstance(f_nom, list) or self.num_pmu != len(f_nom):
+        if self._multistreaming:
+            if not isinstance(f_nom, list) or self._num_pmu != len(f_nom):
                 raise FrameError("When NUM_PMU > 1 provide FNOM as list with NUM_PMU elements.")
 
             fnom_list = []
             for fnom in f_nom:
                 fnom_list.append(ConfigFrame1._fnom2int(fnom))
 
-            self.f_nom = fnom_list
+            self._f_nom = fnom_list
 
         else:
-            self.f_nom = ConfigFrame1._fnom2int(f_nom)
+            self._f_nom = ConfigFrame1._fnom2int(f_nom)
+
+
+    def get_fnom(self):
+
+        return self._f_nom
 
 
     def _fnom2int(fnom=60):
@@ -1330,8 +1400,8 @@ class ConfigFrame1(CommonFrame):
 
         """
 
-        if self.multistreaming:
-            if not isinstance(cfg_count, list) or self.num_pmu != len(cfg_count):
+        if self._multistreaming:
+            if not isinstance(cfg_count, list) or self._num_pmu != len(cfg_count):
                 raise FrameError("When NUM_PMU > 1 provide CFGCNT as list with NUM_PMU elements.")
 
             cfgcnt_list = []
@@ -1340,11 +1410,16 @@ class ConfigFrame1(CommonFrame):
                     raise FrameError("CFGCNT out of range. 0 <= CFGCNT <= 65535.")
                 cfgcnt_list.append(cfgcnt)
 
-            self.cfg_count = cfgcnt_list
+            self._cfg_count = cfgcnt_list
         else:
             if not 0 <= cfg_count <= 65535:
                 raise FrameError("CFGCNT out of range. 0 <= CFGCNT <= 65535.")
-            self.cfg_count = cfg_count
+            self._cfg_count = cfg_count
+
+
+    def get_cfg_count(self):
+
+        return self._cfg_count
 
 
     def set_data_rate(self, data_rate):
@@ -1368,37 +1443,42 @@ class ConfigFrame1(CommonFrame):
         """
         if not -32767 <= data_rate <= 32767:
             raise FrameError("DATA_RATE out of range. -32 767 <= DATA_RATE <= 32 767.")
-        self.data_rate = data_rate
+        self._data_rate = data_rate
+
+
+    def get_data_rate(self):
+
+        return self._data_rate
 
 
     def convert2bytes(self):
 
-        if not self.multistreaming:
+        if not self._multistreaming:
 
-            cfg_b = self.time_base.to_bytes(4, 'big') + self.num_pmu.to_bytes(2, 'big') + \
-                    str.encode(self.station_name) + self.id_code.to_bytes(2, 'big') + \
-                    self.data_format.to_bytes(2, 'big') + self.phasor_num.to_bytes(2, 'big') + \
-                    self.analog_num.to_bytes(2, 'big') + self.digital_num.to_bytes(2, 'big') + \
-                    str.encode(''.join(self.channel_names)) + list2bytes(self.ph_units, 4) + \
-                    list2bytes(self.an_units, 4) + list2bytes(self.dig_units, 4) + \
-                    self.f_nom.to_bytes(2, 'big') + self.cfg_count.to_bytes(2, 'big') + \
-                    self.data_rate.to_bytes(2, 'big')
+            cfg_b = self._time_base.to_bytes(4, 'big') + self._num_pmu.to_bytes(2, 'big') + \
+                    str.encode(self._station_name) + self._id_code.to_bytes(2, 'big') + \
+                    self._data_format.to_bytes(2, 'big') + self._phasor_num.to_bytes(2, 'big') + \
+                    self._analog_num.to_bytes(2, 'big') + self._digital_num.to_bytes(2, 'big') + \
+                    str.encode(''.join(self._channel_names)) + list2bytes(self._ph_units, 4) + \
+                    list2bytes(self._an_units, 4) + list2bytes(self._dig_units, 4) + \
+                    self._f_nom.to_bytes(2, 'big') + self._cfg_count.to_bytes(2, 'big') + \
+                    self._data_rate.to_bytes(2, 'big')
         else:
 
-            cfg_b = self.time_base.to_bytes(4, 'big') + self.num_pmu.to_bytes(2, 'big')
+            cfg_b = self._time_base.to_bytes(4, 'big') + self._num_pmu.to_bytes(2, 'big')
 
             # Concatenate configurations as many as num_pmu tells
-            for i in range(self.num_pmu):
-                cfg_b_i = str.encode(self.station_name[i]) + self.id_code[i].to_bytes(2, 'big') + \
-                          self.data_format[i].to_bytes(2, 'big') + self.phasor_num[i].to_bytes(2, 'big') + \
-                          self.analog_num[i].to_bytes(2, 'big') + self.digital_num[i].to_bytes(2, 'big') + \
-                          str.encode(''.join(self.channel_names[i])) + list2bytes(self.ph_units[i], 4) + \
-                          list2bytes(self.an_units[i], 4) + list2bytes(self.dig_units[i], 4) + \
-                          self.f_nom[i].to_bytes(2, 'big') + self.cfg_count[i].to_bytes(2, 'big')
+            for i in range(self._num_pmu):
+                cfg_b_i = str.encode(self._station_name[i]) + self._id_code[i].to_bytes(2, 'big') + \
+                          self._data_format[i].to_bytes(2, 'big') + self._phasor_num[i].to_bytes(2, 'big') + \
+                          self._analog_num[i].to_bytes(2, 'big') + self._digital_num[i].to_bytes(2, 'big') + \
+                          str.encode(''.join(self._channel_names[i])) + list2bytes(self._ph_units[i], 4) + \
+                          list2bytes(self._an_units[i], 4) + list2bytes(self._dig_units[i], 4) + \
+                          self._f_nom[i].to_bytes(2, 'big') + self._cfg_count[i].to_bytes(2, 'big')
 
                 cfg_b += cfg_b_i
 
-            cfg_b += self.data_rate.to_bytes(2, 'big')
+            cfg_b += self._data_rate.to_bytes(2, 'big')
 
         return super().convert2bytes(cfg_b)
 
@@ -1684,7 +1764,7 @@ class DataFrame(CommonFrame):
         super().__init__('data', pmu_id_code, soc, frasec)
 
         # TODO: ValueError for this
-        self.num_measurements = num_measurements
+        self.set_num_measurements(num_measurements)
         self.set_data_format(data_format, num_measurements)
         self.set_stat(stat)
         self.set_phasors(phasors)
@@ -1693,11 +1773,19 @@ class DataFrame(CommonFrame):
         self.set_analog(analog)
         self.set_digital(digital)
 
+    def set_num_measurements(self, num_measurements):
+
+        self._num_measurements = num_measurements
+
+    def get_num_measurements(self):
+
+        return self._num_measurements
+
 
     def set_stat(self, stat):
 
-        if self.num_measurements > 1:
-            if not isinstance(stat, list) or self.num_measurements != len(stat):
+        if self._num_measurements > 1:
+            if not isinstance(stat, list) or self._num_measurements != len(stat):
                 raise TypeError("When number of measurements > 1 provide STAT as list with NUM_MEASUREMENTS elements.")
 
             stats = []  # Format tuples transformed to ints
@@ -1712,15 +1800,20 @@ class DataFrame(CommonFrame):
                     else:
                         stats.append(stat_el)
 
-                self.stat = stats
+                self._stat = stats
         else:
             if isinstance(stat, tuple):
-                self.stat = DataFrame._stat2int(*stat)
+                self._stat = DataFrame._stat2int(*stat)
             else:
                 if not 0 <= stat <= 65536:
                     raise ValueError("STAT out of range. 0 <= STAT <= 65536")
                 else:
-                    self.stat = stat
+                    self._stat = stat
+
+
+    def get_stat(self):
+
+        return self._stat
 
 
     # STAT: TODO: Document Table 7. and unlocked time
@@ -1762,12 +1855,12 @@ class DataFrame(CommonFrame):
     def set_phasors(self, phasors):
 
         phasors_list = []  # Format tuples transformed to ints
-        if self.num_measurements > 1:
-            if not isinstance(phasors, list) or self.num_measurements != len(phasors):
+        if self._num_measurements > 1:
+            if not isinstance(phasors, list) or self._num_measurements != len(phasors):
                 raise TypeError("When number of measurements > 1 provide PHASORS as list of tuple list with "
                                 "NUM_MEASUREMENTS elements.")
 
-            if not isinstance(self.data_format, list) or self.num_measurements != len(self.data_format):
+            if not isinstance(self._data_format, list) or self._num_measurements != len(self._data_format):
                 raise TypeError("When number of measurements > 1 provide DATA_FORMAT as list with "
                                 "NUM_MEASUREMENTS elements.")
 
@@ -1775,14 +1868,19 @@ class DataFrame(CommonFrame):
                 ph_measurements = []
                 # TODO: Add phasor_num to check length of phasor list
                 for phasor_measurement in phasor:
-                    ph_measurements.append(DataFrame._phasor2int(phasor_measurement, self.data_format[i]))
+                    ph_measurements.append(DataFrame._phasor2int(phasor_measurement, self._data_format[i]))
 
                 phasors_list.append(ph_measurements)
         else:
             for phasor_measurement in phasors:
-                phasors_list.append(DataFrame._phasor2int(phasor_measurement, self.data_format))
+                phasors_list.append(DataFrame._phasor2int(phasor_measurement, self._data_format))
 
-        self.phasors = phasors_list
+        self._phasors = phasors_list
+
+
+    def get_phasors(self):
+
+        return self._phasors
 
 
     def _phasor2int(phasor, data_format):
@@ -1840,22 +1938,27 @@ class DataFrame(CommonFrame):
 
     def set_freq(self, freq):
 
-        if self.num_measurements > 1:
-            if not isinstance(freq, list) or self.num_measurements != len(freq):
+        if self._num_measurements > 1:
+            if not isinstance(freq, list) or self._num_measurements != len(freq):
                 raise TypeError("When number of measurements > 1 provide FREQ as list with "
                                 "NUM_MEASUREMENTS elements.")
 
-            if not isinstance(self.data_format, list) or self.num_measurements != len(self.data_format):
+            if not isinstance(self._data_format, list) or self._num_measurements != len(self._data_format):
                 raise TypeError("When number of measurements > 1 provide DATA_FORMAT as list with "
                                 "NUM_MEASUREMENTS elements.")
 
             freq_list = []  # Format tuples transformed to ints
             for i, fr in enumerate(freq):
-                freq_list.append(DataFrame._freq2int(fr, self.data_format[i]))
+                freq_list.append(DataFrame._freq2int(fr, self._data_format[i]))
 
-            self.freq = freq_list
+            self._freq = freq_list
         else:
-            self.freq = DataFrame._freq2int(freq, self.data_format)
+            self._freq = DataFrame._freq2int(freq, self._data_format)
+
+
+    def get_freq(self):
+
+        return self._freq
 
 
     def _freq2int(freq, data_format):
@@ -1871,22 +1974,27 @@ class DataFrame(CommonFrame):
 
     def set_dfreq(self, dfreq):
 
-        if self.num_measurements > 1:
-            if not isinstance(dfreq, list) or self.num_measurements != len(dfreq):
+        if self._num_measurements > 1:
+            if not isinstance(dfreq, list) or self._num_measurements != len(dfreq):
                 raise TypeError("When number of measurements > 1 provide DFREQ as list with "
                                 "NUM_MEASUREMENTS elements.")
 
-            if not isinstance(self.data_format, list) or self.num_measurements != len(self.data_format):
+            if not isinstance(self._data_format, list) or self._num_measurements != len(self._data_format):
                 raise TypeError("When number of measurements > 1 provide DATA_FORMAT as list with "
                                 "NUM_MEASUREMENTS elements.")
 
             dfreq_list = []  # Format tuples transformed to ints
             for i, dfr in enumerate(dfreq):
-                dfreq_list.append(DataFrame._dfreq2int(dfr, self.data_format[i]))
+                dfreq_list.append(DataFrame._dfreq2int(dfr, self._data_format[i]))
 
-            self.dfreq = dfreq_list
+            self._dfreq = dfreq_list
         else:
-            self.dfreq = DataFrame._dfreq2int(dfreq, self.data_format)
+            self._dfreq = DataFrame._dfreq2int(dfreq, self._data_format)
+
+
+    def get_dfreq(self):
+
+        return self._dfreq
 
 
     def _dfreq2int(dfreq, data_format):
@@ -1904,12 +2012,12 @@ class DataFrame(CommonFrame):
 
         analog_list = []
         # Format tuples transformed to ints
-        if self.num_measurements > 1:
-            if not isinstance(analog, list) or self.num_measurements != len(analog):
+        if self._num_measurements > 1:
+            if not isinstance(analog, list) or self._num_measurements != len(analog):
                 raise TypeError("When number of measurements > 1 provide ANALOG as list of list with "
                                 "NUM_MEASUREMENTS elements.")
 
-            if not isinstance(self.data_format, list) or self.num_measurements != len(self.data_format):
+            if not isinstance(self._data_format, list) or self._num_measurements != len(self._data_format):
                 raise TypeError("When number of measurements > 1 provide DATA_FORMAT as list with "
                                 "NUM_MEASUREMENTS elements.")
 
@@ -1917,15 +2025,20 @@ class DataFrame(CommonFrame):
                 an_measurements = []
                 # TODO: Add analog_num to check length of analog list
                 for analog_measurement in an:
-                    an_measurements.append(DataFrame._analog2int(analog_measurement, self.data_format[i]))
+                    an_measurements.append(DataFrame._analog2int(analog_measurement, self._data_format[i]))
 
                 analog_list.append(an_measurements)
 
         else:
             for analog_measurement in analog:
-                analog_list.append(DataFrame._analog2int(analog_measurement, self.data_format))
+                analog_list.append(DataFrame._analog2int(analog_measurement, self._data_format))
 
-        self.analog = analog_list
+        self._analog = analog_list
+
+
+    def get_analog(self):
+
+        return self._analog
 
 
     def _analog2int(analog, data_format):
@@ -1944,8 +2057,8 @@ class DataFrame(CommonFrame):
 
         digital_list = []
         # Format tuples transformed to ints
-        if self.num_measurements > 1:
-            if not isinstance(digital, list) or self.num_measurements != len(digital):
+        if self._num_measurements > 1:
+            if not isinstance(digital, list) or self._num_measurements != len(digital):
                 raise TypeError("When number of measurements > 1 provide DIGITAL as list of lists with "
                                 "NUM_MEASUREMENTS elements.")
 
@@ -1961,7 +2074,12 @@ class DataFrame(CommonFrame):
             for digital_measurement in digital:
                 digital_list.append(DataFrame._digital2int(digital_measurement))
 
-        self.digital = digital_list
+        self._digital = digital_list
+
+
+    def get_digital(self):
+
+        return self._digital
 
 
     def _digital2int(digital):
@@ -1974,27 +2092,27 @@ class DataFrame(CommonFrame):
     def convert2bytes(self):
 
         # Convert DataFrame message to bytes
-        if not self.num_measurements > 1:
+        if not self._num_measurements > 1:
 
-            data_format_size = CommonFrame._get_data_format_size(self.data_format)
+            data_format_size = CommonFrame._get_data_format_size(self._data_format)
 
-            df_b = self.stat.to_bytes(2, 'big') + list2bytes(self.phasors, data_format_size['phasor']) + \
-                   self.freq.to_bytes(data_format_size['freq'], 'big') + \
-                   self.dfreq.to_bytes(data_format_size['freq'], 'big') + \
-                   list2bytes(self.analog, data_format_size['analog']) + list2bytes(self.digital, 2)
+            df_b = self._stat.to_bytes(2, 'big') + list2bytes(self._phasors, data_format_size['phasor']) + \
+                   self._freq.to_bytes(data_format_size['freq'], 'big') + \
+                   self._dfreq.to_bytes(data_format_size['freq'], 'big') + \
+                   list2bytes(self._analog, data_format_size['analog']) + list2bytes(self._digital, 2)
         else:
             # Concatenate measurements as many as num_measurements tells
             df_b = None
-            for i in range(self.num_measurements):
+            for i in range(self._num_measurements):
 
-                data_format_size = CommonFrame._get_data_format_size(self.data_format[i])
+                data_format_size = CommonFrame._get_data_format_size(self._data_format[i])
 
-                df_b_i = self.stat[i].to_bytes(2, 'big') + \
-                         list2bytes(self.phasors[i], data_format_size['phasor']) + \
-                         self.freq[i].to_bytes(data_format_size['freq'], 'big') + \
-                         self.dfreq[i].to_bytes(data_format_size['freq'], 'big') + \
-                         list2bytes(self.analog[i], data_format_size['analog']) + \
-                         list2bytes(self.digital[i], 2)
+                df_b_i = self._stat[i].to_bytes(2, 'big') + \
+                         list2bytes(self._phasors[i], data_format_size['phasor']) + \
+                         self._freq[i].to_bytes(data_format_size['freq'], 'big') + \
+                         self._dfreq[i].to_bytes(data_format_size['freq'], 'big') + \
+                         list2bytes(self._analog[i], data_format_size['analog']) + \
+                         list2bytes(self._digital[i], 2)
 
                 if df_b:
                     df_b += df_b_i
@@ -2028,13 +2146,13 @@ class CommandFrame(CommonFrame):
     def set_command(self, command):
 
         if command in CommandFrame.COMMANDS:
-            self.command = CommandFrame.COMMANDS[command]
+            self._command = CommandFrame.COMMANDS[command]
         else:
-            self.command = CommandFrame._command2int(command)
+            self._command = CommandFrame._command2int(command)
 
 
     def get_command(self):
-        return CommandFrame.COMMAND_WORDS[self.command]
+        return CommandFrame.COMMAND_WORDS[self._command]
 
 
     def _command2int(command):
@@ -2048,7 +2166,7 @@ class CommandFrame(CommonFrame):
     def set_extended_frame(self, extended_frame):
 
         if extended_frame is not None:
-            self.extended_frame = CommandFrame._extended2int(extended_frame)
+            self._extended_frame = CommandFrame._extended2int(extended_frame)
 
 
     def _extended2int(extended_frame):
@@ -2061,10 +2179,10 @@ class CommandFrame(CommonFrame):
 
     def convert2bytes(self):
 
-        if self.command == 8:
-            cmd_b = self.command.to_bytes(2, 'big') + self.extended_frame
+        if self._command == 8:
+            cmd_b = self._command.to_bytes(2, 'big') + self._extended_frame
         else:
-            cmd_b = self.command.to_bytes(2, 'big')
+            cmd_b = self._command.to_bytes(2, 'big')
 
         return super().convert2bytes(cmd_b)
 
@@ -2124,12 +2242,22 @@ class HeaderFrame(CommonFrame):
     def __init__(self, pmu_id_code, header, soc=None, frasec=None):
 
         super().__init__('header', pmu_id_code, soc, frasec)
-        self.header = header
+        self.set_header(header)
+
+
+    def set_header(self, header):
+
+        self._header = header
+
+
+    def get_header(self):
+
+        return self._header
 
 
     def convert2bytes(self):
 
-        header_b = str.encode(self.header)
+        header_b = str.encode(self._header)
         return super().convert2bytes(header_b)
 
 

@@ -6,7 +6,6 @@ import threading
 from select import select
 from sys import stdout
 from time import sleep
-from time import time
 from synchrophasor.frame import *
 
 
@@ -187,8 +186,8 @@ class Pmu(object):
 
         self.pmu_id = pmu_id
         self.data_rate = data_rate
-        self.num_pmu = self.cfg2.num_pmu
-        self.data_format = self.cfg2.data_format
+        self.num_pmu = self.cfg2.get_num_pmu()
+        self.data_format = self.cfg2.get_data_format()
         self.method = method
 
         self.clients = []
@@ -234,15 +233,15 @@ class Pmu(object):
 
         # Update data rate and PMU ID if changed:
         if config:
-            self.pmu_id = config.get_pmu_id_code()
-            self.data_rate = config.data_rate
-            self.data_format = config.data_format
-            self.num_pmu = config.num_pmu
+            self.pmu_id = config.get_id_code()
+            self.data_rate = config.get_data_rate()
+            self.data_format = config.get_data_format()
+            self.num_pmu = config.get_num_pmu()
         else:
-            self.pmu_id = self.ieee_cfg2_sample.get_pmu_id_code()
-            self.data_rate = self.ieee_cfg2_sample.data_rate
-            self.data_format = self.ieee_cfg2_sample.data_format
-            self.num_pmu = self.ieee_cfg2_sample.num_pmu
+            self.pmu_id = self.ieee_cfg2_sample.get_id_code()
+            self.data_rate = self.ieee_cfg2_sample.get_data_rate()
+            self.data_format = self.ieee_cfg2_sample.get_data_format()
+            self.num_pmu = self.ieee_cfg2_sample.get_num_pmu()
 
         # self.send(self.cfg1)
         self.send(self.cfg2)
@@ -298,9 +297,9 @@ class Pmu(object):
 
     def set_data_format(self, data_format):
 
-        self.cfg1.set_data_format(data_format, self.cfg1.num_pmu)
-        self.cfg2.set_data_format(data_format, self.cfg2.num_pmu)
-        self.cfg3.set_data_format(data_format, self.cfg3.num_pmu)
+        self.cfg1.set_data_format(data_format, self.cfg1.get_num_pmu())
+        self.cfg2.set_data_format(data_format, self.cfg2.get_num_pmu())
+        self.cfg3.set_data_format(data_format, self.cfg3.get_num_pmu())
         self.data_format = data_format
 
         # Configuration changed - Notify all PDCs about new configuration
@@ -339,9 +338,9 @@ class Pmu(object):
 
             for i, df in self.data_format:  # TODO: Are you really going to check data format like this?
                 if df in [0, 1, 4, 5, 8, 12, 13]:  # Check if phasor representation is integer
-                    phasors[i] = map(lambda x: int(x / (0.00001 * self.cfg2.ph_units[i])), phasors[i])
+                    phasors[i] = map(lambda x: int(x / (0.00001 * self.cfg2.get_ph_units()[i])), phasors[i])
         elif self.data_format in [0, 1, 4, 5, 8, 12, 13]:
-            phasors = map(lambda x: int(x / (0.00001 * self.cfg2.ph_units)), phasors)
+            phasors = map(lambda x: int(x / (0.00001 * self.cfg2.get_ph_units())), phasors)
 
         # AN_UNIT conversion
         if analog and self.num_pmu > 1:  # Check if multistreaming:
@@ -350,9 +349,9 @@ class Pmu(object):
 
             for i, df in self.data_format:  # TODO: Are you really going to check data format like this?
                 if df in [0, 1, 2, 3, 8, 9, 10]:  # Check if analog representation is integer
-                    analog[i] = map(lambda x: int(x / self.cfg2.an_units[i]), analog[i])
+                    analog[i] = map(lambda x: int(x / self.cfg2.get_analog_units()[i]), analog[i])
         elif self.data_format in [0, 1, 2, 3, 8, 9, 10]:
-            analog = map(lambda x: int(x / self.cfg2.an_units), analog)
+            analog = map(lambda x: int(x / self.cfg2.get_analog_units()), analog)
 
         data_frame = DataFrame(self.pmu_id, stat, phasors, freq, dfreq, analog, digital,
                                self.data_format, self.num_pmu)

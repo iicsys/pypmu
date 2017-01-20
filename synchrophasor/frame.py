@@ -1411,44 +1411,115 @@ class ConfigFrame1(CommonFrame):
 
             num_pmu = int.from_bytes(byte_data[18:20], byteorder='big', signed=False)
 
+            start_byte = 20
+
             if num_pmu > 1:  # Loop through configurations for each
 
-                pass
+                station_name, id_code, data_format, phasor_num, analog_num, digital_num, channel_names, ph_units, \
+                an_units, dig_units, fnom, cfg_count = [[] for _ in range(12)]
+
+                for i in range(num_pmu):
+
+                    station_name.append(byte_data[start_byte:start_byte+16].decode('ascii'))
+                    start_byte += 16
+
+                    id_code.append(int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False))
+                    start_byte += 2
+
+                    data_format.append(int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False)
+                                       & 0x000f)
+                    start_byte += 2
+
+                    phasor_num.append(int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False))
+                    start_byte += 2
+
+                    analog_num.append(int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False))
+                    start_byte += 2
+
+                    digital_num.append(int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False))
+                    start_byte += 2
+
+                    stream_channel_names = []
+                    for _ in range(phasor_num[i] + analog_num[i] + 16*digital_num[i]):
+                        stream_channel_names.append(byte_data[start_byte:start_byte+16].decode('ascii'))
+                        start_byte += 16
+
+                    channel_names.append(stream_channel_names)
+
+                    stream_ph_units = []
+                    for _ in range(phasor_num[i]):
+                        ph_unit = int.from_bytes(byte_data[start_byte:start_byte+4], byteorder='big', signed=False)
+                        stream_ph_units.append(ConfigFrame1.int2phunit(ph_unit))
+                        start_byte += 4
+
+                    ph_units.append(stream_ph_units)
+
+                    stream_an_units = []
+                    for _ in range(analog_num[i]):
+                        an_type = int.from_bytes(byte_data[start_byte:start_byte+1], byteorder='big', signed=False)
+                        an_scale = int.from_bytes(byte_data[start_byte+1:start_byte+3], byteorder='big', signed=True)
+                        stream_an_units.append(ConfigFrame1.int2anunit(an_type, an_scale))
+                        start_byte += 4
+
+                    an_units.append(stream_an_units)
+
+                    stream_dig_units = []
+                    for _ in range(digital_num[i]):
+                        stream_dig_units.append((
+                            int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False),
+                            int.from_bytes(byte_data[start_byte+2:start_byte+4], byteorder='big', signed=False)))
+                        start_byte += 4
+
+                    dig_units.append(stream_dig_units)
+
+                    fnom.append(ConfigFrame1.int2fnom(int.from_bytes(byte_data[start_byte:start_byte+2],
+                                                                     byteorder='big', signed=False)))
+                    start_byte += 2
+
+                    cfg_count.append(int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False))
+                    start_byte += 2
 
             else:
 
-                station_name = byte_data[20:36].decode('ascii')
+                station_name = byte_data[start_byte:start_byte+16].decode('ascii')
+                start_byte += 16
 
-                id_code = int.from_bytes(byte_data[36:38], byteorder='big', signed=False)
+                id_code = int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False)
+                start_byte += 2
 
-                data_format_int = int.from_bytes(byte_data[38:40], byteorder='big', signed=False)
-                data_fromat = data_format_int & 0x000f  # Take only first 4 LSB bits
+                data_format_int = int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False)
+                data_format = data_format_int & 0x000f  # Take only first 4 LSB bits
+                start_byte += 2
 
-                phasor_num = int.from_bytes(byte_data[40:42], byteorder='big', signed=False)
-                analog_num = int.from_bytes(byte_data[42:44], byteorder='big', signed=False)
-                digital_num = int.from_bytes(byte_data[44:46], byteorder='big', signed=False)
+                phasor_num = int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False)
+                start_byte += 2
+
+                analog_num = int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False)
+                start_byte += 2
+
+                digital_num = int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False)
+                start_byte += 2
 
                 channel_names = []
-                start_byte = 46
-                for i in range(phasor_num + analog_num + 16*digital_num):
+                for _ in range(phasor_num + analog_num + 16*digital_num):
                     channel_names.append(byte_data[start_byte:start_byte+16].decode('ascii'))
                     start_byte += 16
 
                 ph_units = []
-                for i in range(phasor_num):
+                for _ in range(phasor_num):
                     ph_unit_int = int.from_bytes(byte_data[start_byte:start_byte+4], byteorder='big', signed=False)
                     ph_units.append(ConfigFrame1.int2phunit(ph_unit_int))
                     start_byte += 4
 
                 an_units = []
-                for i in range(analog_num):
+                for _ in range(analog_num):
                     an_type = int.from_bytes(byte_data[start_byte:start_byte+1], byteorder='big', signed=False)
                     an_scale = int.from_bytes(byte_data[start_byte+1:start_byte+3], byteorder='big', signed=True)
                     an_units.append(ConfigFrame1.int2anunit(an_type, an_scale))
                     start_byte += 4
 
                 dig_units = []
-                for i in range(digital_num):
+                for _ in range(digital_num):
                     dig_units.append((int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False),
                                       int.from_bytes(byte_data[start_byte+2:start_byte+4], byteorder='big', signed=False)))
                     start_byte += 4
@@ -1460,9 +1531,9 @@ class ConfigFrame1(CommonFrame):
                 cfg_count = int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False)
                 start_byte += 2
 
-            data_rate = int.from_bytes(byte_data[-2:-4], byteorder='big', signed=True)
+            data_rate = int.from_bytes(byte_data[-4:-2], byteorder='big', signed=True)
 
-            return ConfigFrame1(pmu_code, time_base, num_pmu, station_name, id_code, data_fromat, phasor_num,
+            return ConfigFrame1(pmu_code, time_base, num_pmu, station_name, id_code, data_format, phasor_num,
                                 analog_num, digital_num, channel_names, ph_units, an_units, dig_units, fnom, cfg_count,
                                 data_rate, soc, (frasec, leap_dir, leap_occ, leap_pen, time_quality))
 

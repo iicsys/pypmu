@@ -168,7 +168,8 @@ class CommonFrame(metaclass=ABCMeta):
 
 
     def get_version(self):
-        return  self._version
+
+        return self._version
 
 
     def set_id_code(self, id_code):
@@ -334,11 +335,11 @@ class CommonFrame(metaclass=ABCMeta):
         if not 0 <= fr_seconds <= 16777215:
             raise FrameError("Frasec out of range. 0 <= FRASEC <= 16777215 ")
 
-        # TODO: Values 12 - 14 are undefined.
-        if not 0 <= time_quality <= 15:
+        if (not 0 <= time_quality <= 15) or (time_quality in [12, 13, 14]):
             raise FrameError("Time quality flag out of range. 0 <= MSG_TQ <= 15")
 
-        # TODO: Validate leap_dir sign (+ or -).
+        if leap_dir not in ['+', '-']:
+            raise FrameError("Leap second direction must be '+' or '-'")
 
         frasec = 1 << 1  # Bit 7: Reserved for future use. Not important but it will be 1 for easier byte forming.
 
@@ -373,6 +374,27 @@ class CommonFrame(metaclass=ABCMeta):
     def get_frasec(self):
 
         return self._frasec  # TODO: Implement according to set_frasec method
+
+
+    @staticmethod
+    def _int2frasec(frasec_int):
+
+        frasec_bytes = frasec_int.to_bytes(4, 'big')
+
+        tq = frasec_bytes[0:1]
+        leap_dir = frasec_int & 0b01000000
+        leap_occ = frasec_int & 0b00100000
+        leap_pen = frasec_int & 0b00010000
+
+        time_quality = frasec_int & 0b00001111
+
+        # Reassign values to create Command frame
+        leap_dir = '-' if leap_dir else '+'
+        leap_occ = bool(leap_occ)
+        leap_pen = bool(leap_pen)
+
+        frasec = int.from_bytes(frasec_bytes[11:14], byteorder='big', signed=False)
+
 
 
     def _get_data_format_size(data_format):
@@ -1700,6 +1722,15 @@ class ConfigFrame2(ConfigFrame1):
                          digital_num, channel_names, ph_units, an_units, dig_units, f_nom, cfg_count,
                          data_rate, soc, frasec, version)
         super().set_frame_type('cfg2')
+
+
+    @staticmethod
+    def convert2frame(byte_data):
+
+        cfg = ConfigFrame1.convert2frame(byte_data)
+        cfg.set_frame_type('cfg2')
+
+        return cfg
 
 
 class ConfigFrame3(CommonFrame):

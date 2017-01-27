@@ -373,28 +373,27 @@ class CommonFrame(metaclass=ABCMeta):
 
     def get_frasec(self):
 
-        return self._frasec  # TODO: Implement according to set_frasec method
+        return self._int2frasec(self._frasec)
 
 
     @staticmethod
     def _int2frasec(frasec_int):
 
-        frasec_bytes = frasec_int.to_bytes(4, 'big')
+        tq = frasec_int >> 24
+        leap_dir = tq & 0b01000000
+        leap_occ = tq & 0b00100000
+        leap_pen = tq & 0b00010000
 
-        tq = frasec_bytes[0:1]
-        leap_dir = frasec_int & 0b01000000
-        leap_occ = frasec_int & 0b00100000
-        leap_pen = frasec_int & 0b00010000
-
-        time_quality = frasec_int & 0b00001111
+        time_quality = tq & 0b00001111
 
         # Reassign values to create Command frame
         leap_dir = '-' if leap_dir else '+'
         leap_occ = bool(leap_occ)
         leap_pen = bool(leap_pen)
 
-        frasec = int.from_bytes(frasec_bytes[11:14], byteorder='big', signed=False)
+        fr_seconds = frasec_int & (2**23-1)
 
+        return fr_seconds, leap_dir, leap_occ, leap_pen, time_quality
 
 
     def _get_data_format_size(data_format):
@@ -570,6 +569,7 @@ class CommonFrame(metaclass=ABCMeta):
 
         return data_format
 
+
     @staticmethod
     def _check_crc(byte_data):
 
@@ -579,6 +579,7 @@ class CommonFrame(metaclass=ABCMeta):
             return False
 
         return True
+
 
     @abstractmethod
     def convert2bytes(self, byte_message):
@@ -1515,21 +1516,7 @@ class ConfigFrame1(CommonFrame):
 
             pmu_code = int.from_bytes(byte_data[4:6], byteorder='big', signed=False)
             soc = int.from_bytes(byte_data[6:10], byteorder='big', signed=False)
-            time_quality_frasec = int.from_bytes(byte_data[10:11], byteorder='big', signed=False)
-
-            # Get bits using masks
-            leap_dir = time_quality_frasec & 0b01000000
-            leap_occ = time_quality_frasec & 0b00100000
-            leap_pen = time_quality_frasec & 0b00010000
-
-            time_quality = time_quality_frasec & 0b00001111
-
-            # Reassign values to create Command frame
-            leap_dir = '-' if leap_dir else '+'
-            leap_occ = bool(leap_occ)
-            leap_pen = bool(leap_pen)
-
-            frasec = int.from_bytes(byte_data[11:14], byteorder='big', signed=False)
+            frasec = CommonFrame._int2frasec(int.from_bytes(byte_data[10:14], byteorder='big', signed=False))
 
             time_base_int = int.from_bytes(byte_data[14:18], byteorder='big', signed=False)
             time_base = time_base_int & 0x00ffffff  # take only first 24 LSB bits
@@ -1660,7 +1647,7 @@ class ConfigFrame1(CommonFrame):
 
             return ConfigFrame1(pmu_code, time_base, num_pmu, station_name, id_code, data_format, phasor_num,
                                 analog_num, digital_num, channel_names, ph_units, an_units, dig_units, fnom, cfg_count,
-                                data_rate, soc, (frasec, leap_dir, leap_occ, leap_pen, time_quality))
+                                data_rate, soc, frasec)
 
         except Exception as error:
             raise FrameError("Error while creating Config frame: " + str(error))
@@ -2228,21 +2215,7 @@ class CommandFrame(CommonFrame):
 
             pmu_code = int.from_bytes(byte_data[4:6], byteorder='big', signed=False)
             soc = int.from_bytes(byte_data[6:10], byteorder='big', signed=False)
-            time_quality_frasec = int.from_bytes(byte_data[10:11], byteorder='big', signed=False)
-
-            # Get bits using masks
-            leap_dir = time_quality_frasec & 0b01000000
-            leap_occ = time_quality_frasec & 0b00100000
-            leap_pen = time_quality_frasec & 0b00010000
-
-            time_quality = time_quality_frasec & 0b00001111
-
-            # Reassign values to create Command frame
-            leap_dir = '-' if leap_dir else '+'
-            leap_occ = bool(leap_occ)
-            leap_pen = bool(leap_pen)
-
-            frasec = int.from_bytes(byte_data[11:14], byteorder='big', signed=False)
+            frasec = CommonFrame._int2frasec(int.from_bytes(byte_data[10:14], byteorder='big', signed=False))
 
             command_int = int.from_bytes(byte_data[14:16], byteorder='big', signed=False)
             command = [command for command, code in CommandFrame.COMMANDS.items() if code == command_int]
@@ -2261,8 +2234,7 @@ class CommandFrame(CommonFrame):
             else:
                 extended_frame = None
 
-            return CommandFrame(pmu_code, command, extended_frame, soc, (frasec, leap_dir, leap_occ,
-                                                                         leap_pen, time_quality))
+            return CommandFrame(pmu_code, command, extended_frame, soc, frasec)
 
         except Exception as error:
             raise FrameError("Error while creating Command frame: " + str(error))
@@ -2301,27 +2273,12 @@ class HeaderFrame(CommonFrame):
 
             pmu_code = int.from_bytes(byte_data[4:6], byteorder='big', signed=False)
             soc = int.from_bytes(byte_data[6:10], byteorder='big', signed=False)
-            time_quality_frasec = int.from_bytes(byte_data[10:11], byteorder='big', signed=False)
-
-            # Get bits using masks
-            leap_dir = time_quality_frasec & 0b01000000
-            leap_occ = time_quality_frasec & 0b00100000
-            leap_pen = time_quality_frasec & 0b00010000
-
-            time_quality = time_quality_frasec & 0b00001111
-
-            # Reassign values to create Command frame
-            leap_dir = '-' if leap_dir else '+'
-            leap_occ = bool(leap_occ)
-            leap_pen = bool(leap_pen)
-
-            frasec = int.from_bytes(byte_data[11:14], byteorder='big', signed=False)
+            frasec = CommonFrame._int2frasec(int.from_bytes(byte_data[10:14], byteorder='big', signed=False))
 
             header_message = byte_data[14:-2]
             header_message = str(header_message)
 
-            return HeaderFrame(pmu_code, header_message, soc, (frasec, leap_dir, leap_occ, leap_pen,
-                                                               time_quality))
+            return HeaderFrame(pmu_code, header_message, soc, frasec)
 
         except Exception as error:
             raise FrameError("Error while creating Header frame: " + str(error))

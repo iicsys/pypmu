@@ -1826,7 +1826,17 @@ class ConfigFrame3(CommonFrame):
 class DataFrame(CommonFrame):
 
     MEASUREMENT_STATUS = { 'ok': 0, 'error': 1, 'test': 2, 'verror': 3 }
+    MEASUREMENT_STATUS_WORDS = { code: word for word, code in MEASUREMENT_STATUS.items() }
+
     UNLOCKED_TIME = { '<10': 0, '<100': 1, '<1000': 2, '>1000': 3 }
+    UNLOCKED_TIME_WORDS = { code: word for word, code in UNLOCKED_TIME.items() }
+
+    TIME_QUALITY = { 'n/a': 0, '<100ns': 1, '<1us': 2, '<10us': 3, '<100us': 4, '<1ms': 5, '<10ms': 6, '>10ms': 7}
+    TIME_QUALITY_WORDS = { code: word for word, code in TIME_QUALITY.items() }
+
+    TRIGGER_REASON = { 'manual': 0, 'magnitude_low': 1, 'magnitude_high': 2, 'phase_angle_diff': 3,
+                       'frequency_high_or_log': 4, 'df/dt_high': 5, 'reserved': 6, 'digital': 7 }
+    TRIGGER_REASON_WORDS = { code: word for word, code in TRIGGER_REASON.items() }
 
 
     def __init__(self, pmu_id_code, stat, phasors, freq, dfreq, analog, digital, data_format, num_measurements=1,
@@ -1848,6 +1858,7 @@ class DataFrame(CommonFrame):
     def set_num_measurements(self, num_measurements):
 
         self._num_measurements = num_measurements
+
 
     def get_num_measurements(self):
 
@@ -1885,14 +1896,29 @@ class DataFrame(CommonFrame):
 
     def get_stat(self):
 
-        return self._stat
+        if isinstance(self._stat, list):
+            return [DataFrame._int2stat(stat) for stat in self._stat]
+        else:
+            return DataFrame._int2stat(self._stat)
 
 
-    # STAT: TODO: Document Table 7. and unlocked time
+    @staticmethod
     def _stat2int(measurement_status='ok', sync=True, sorting='timestamp', trigger=False, cfg_change=False,
                   modified=False, time_quality=5, unlocked='<10', trigger_reason=0):
 
-        stat = DataFrame.MEASUREMENT_STATUS[measurement_status] << 2
+        if isinstance(measurement_status, str):
+            measurement_status = DataFrame.MEASUREMENT_STATUS[measurement_status]
+
+        if isinstance(time_quality, str):
+            time_quality = DataFrame.TIME_QUALITY[time_quality]
+
+        if isinstance(unlocked, str):
+            unlocked = DataFrame.UNLOCKED_TIME[unlocked]
+
+        if isinstance(trigger_reason, str):
+            trigger_reason = DataFrame.TRIGGER_REASON[trigger_reason]
+
+        stat = measurement_status << 2
         if not sync:
             stat |= 1
 
@@ -1918,10 +1944,32 @@ class DataFrame(CommonFrame):
         stat |= time_quality
         stat <<= 2
 
-        stat |= DataFrame.UNLOCKED_TIME[unlocked]
+        stat |= unlocked
         stat <<= 4
 
         return stat | trigger_reason
+
+
+    @staticmethod
+    def _int2stat(stat):
+
+        measurement_status = DataFrame.MEASUREMENT_STATUS_WORDS[stat & 0xc000]
+        sync = bool(stat & 0x2000)
+
+        if stat & 0x1000:
+            sorting = 'arrival'
+        else:
+            sorting = 'timestamp'
+
+        trigger = bool(stat & 0x800)
+        cfg_change = bool(stat & 0x400)
+        modified = bool(stat & 0x200)
+
+        time_quality = DataFrame.TIME_QUALITY_WORDS[stat & 0x1c0]
+        unlocked = DataFrame.UNLOCKED_TIME_WORDS[stat & 0x30]
+        trigger_reason = DataFrame.TRIGGER_REASON_WORDS[stat & 0xf]
+
+        return measurement_status, sync, sorting, trigger, cfg_change, modified, time_quality, unlocked, trigger_reason
 
 
     def set_phasors(self, phasors):
@@ -1955,6 +2003,7 @@ class DataFrame(CommonFrame):
         return self._phasors
 
 
+    @staticmethod
     def _phasor2int(phasor, data_format):
 
         if not isinstance(phasor, tuple):
@@ -1965,11 +2014,6 @@ class DataFrame(CommonFrame):
 
             # Check if second bit in data_format is 1 -> floating point representation
             if (data_format & 2) != 0:
-
-                # Polar floating point representation
-                # Angle in radians must be between -3.14 to +3.14
-                if not -3.15 < phasor[1] < 3.15:
-                    raise ValueError("Angle in radians must be between -3.14 and +3.14.")
 
                 mg = pack('!f', float(phasor[0]))
                 an = pack('!f', float(phasor[1]))
@@ -2006,6 +2050,15 @@ class DataFrame(CommonFrame):
                                      "-31767 <= (Re,Im) <= 31767.")
 
                 return (phasor[0] << 16) | phasor[1]
+
+
+    @staticmethod
+    def _int2phasor(phasor, data_format):
+
+        if (data_format & 2) != 0:
+            pass
+        else:
+            pass
 
 
     def set_freq(self, freq):

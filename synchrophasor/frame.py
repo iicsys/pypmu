@@ -26,7 +26,7 @@ __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
 __license__ = "BSD-3"
-__version__ = "0.1"
+__version__ = "0.2"
 
 
 class CommonFrame(metaclass=ABCMeta):
@@ -396,6 +396,7 @@ class CommonFrame(metaclass=ABCMeta):
         return fr_seconds, leap_dir, leap_occ, leap_pen, time_quality
 
 
+    @staticmethod
     def _get_data_format_size(data_format):
         """
         ### get_data_format() ###
@@ -522,9 +523,13 @@ class CommonFrame(metaclass=ABCMeta):
 
     def get_data_format(self):
 
-        return self._data_format
+        if isinstance(self._data_format, list):
+            return [self._int2format(df) for df in self._data_format]
+        else:
+            return self._int2format(self._data_format)
 
 
+    @staticmethod
     def _format2int(phasor_polar=False, phasor_float=False, analogs_float=False, freq_float=False):
         """
         ### format2int() ###
@@ -547,6 +552,7 @@ class CommonFrame(metaclass=ABCMeta):
         * ``int`` representation of data format.
 
         """
+
         data_format = 1 << 1
 
         if freq_float:
@@ -568,6 +574,17 @@ class CommonFrame(metaclass=ABCMeta):
         data_format ^= mask
 
         return data_format
+
+
+    @staticmethod
+    def _int2format(data_format):
+
+        phasor_polar = data_format & 0b0001
+        phasor_float = data_format & 0b0010
+        analogs_float = data_format & 0b0100
+        freq_float = data_format & 0b1000
+
+        return bool(phasor_polar), bool(phasor_float), bool(analogs_float), bool(freq_float)
 
 
     @staticmethod
@@ -1066,9 +1083,13 @@ class ConfigFrame1(CommonFrame):
 
     def get_ph_units(self):
 
-        return self._ph_units
+        if all(isinstance(el, list) for el in self._ph_units):
+            return [[self._int2phunit(unit) for unit in ph_units] for ph_units in self._ph_units]
+        else:
+            return [self._int2phunit(ph_unit) for ph_unit in self._ph_units]
 
 
+    @staticmethod
     def _phunit2int(scale, phasor_type='v'):
         """
         ### phunit2int() ###
@@ -1171,9 +1192,13 @@ class ConfigFrame1(CommonFrame):
 
     def get_analog_units(self):
 
-        return self._an_units
+        if all(isinstance(el, list) for el in self._an_units):
+            return [[self._int2anunit(unit) for unit in an_unit] for an_unit in self._an_units]
+        else:
+            return [self._int2anunit(an_unit) for an_unit in self._an_units]
 
 
+    @staticmethod
     def _anunit2int(scale, anunit_type='pow'):
         """
         ### anunit2int() ###
@@ -1207,6 +1232,8 @@ class ConfigFrame1(CommonFrame):
         if not -8388608 <= scale <= 8388608:
             raise FrameError("ANUNIT scale out of range. -8388608 <= ANUNIT <=  8388608.")
 
+        scale &= 0xffffff  # 24-bit signed integer
+
         anunit = 1 << 24
 
         if anunit_type == 'pow':  # TODO: User defined analog units
@@ -1223,11 +1250,15 @@ class ConfigFrame1(CommonFrame):
 
 
     @staticmethod
-    def _int2anunit(type, scale):
+    def _int2anunit(an_unit):
 
         TYPES = { '0': 'pow', '1': 'rms', '2': 'peak' }
 
-        return scale, TYPES[str(type)]
+        an_unit_byte = an_unit.to_bytes(4, byteorder='big', signed=True)
+        an_type = int.from_bytes(an_unit_byte[0:1], byteorder='big', signed=False)
+        an_scale = int.from_bytes(an_unit_byte[1:4], byteorder='big', signed=True)
+
+        return an_scale, TYPES[str(an_type)]
 
 
     def set_digital_units(self, dig_units):
@@ -1284,9 +1315,13 @@ class ConfigFrame1(CommonFrame):
 
     def get_digital_units(self):
 
-        return self._dig_units
+        if all(isinstance(el, list) for el in self._dig_units):
+            return [[self._int2digunit(unit) for unit in dig_unit] for dig_unit in self._dig_units]
+        else:
+            return [self._int2digunit(dig_unit) for dig_unit in self._dig_units]
 
 
+    @staticmethod
     def _digunit2int(first_mask, second_mask):
         """
         ### digunit2int() ###
@@ -1318,6 +1353,13 @@ class ConfigFrame1(CommonFrame):
 
         return (first_mask << 16) | second_mask
 
+    @staticmethod
+    def _int2digunit(dig_unit):
+
+        first = dig_unit & 0xffff0000
+        second = dig_unit & 0x0000ffff
+
+        return first, second
 
     def set_fnom(self, f_nom):
         """
@@ -1357,9 +1399,13 @@ class ConfigFrame1(CommonFrame):
 
     def get_fnom(self):
 
-        return self._f_nom
+        if isinstance(self._f_nom, list):
+            return [self._int2fnom(fnom) for fnom in self._f_nom]
+        else:
+            return self._int2fnom(self._f_nom)
 
 
+    @staticmethod
     def _fnom2int(fnom=60):
         """
         ### fnom2int() ###
@@ -1393,12 +1439,22 @@ class ConfigFrame1(CommonFrame):
 
 
     @staticmethod
+    def _init2fnom(fnom):
+
+        if fnom:
+            return 50
+        else:
+            return 60
+
+
+    @staticmethod
     def _int2fnom(fnom_int):
 
         if fnom_int == 0:
             return 60
         else:
             return 50
+
 
     def set_cfg_count(self, cfg_count):
         """
@@ -1466,6 +1522,7 @@ class ConfigFrame1(CommonFrame):
         """
         if not -32767 <= data_rate <= 32767:
             raise FrameError("DATA_RATE out of range. -32 767 <= DATA_RATE <= 32 767.")
+
         self._data_rate = data_rate
 
 
@@ -1568,18 +1625,16 @@ class ConfigFrame1(CommonFrame):
 
                     stream_an_units = []
                     for _ in range(analog_num[i]):
-                        an_type = int.from_bytes(byte_data[start_byte:start_byte+1], byteorder='big', signed=False)
-                        an_scale = int.from_bytes(byte_data[start_byte+1:start_byte+3], byteorder='big', signed=True)
-                        stream_an_units.append(ConfigFrame1._int2anunit(an_type, an_scale))
+                        an_unit = int.from_bytes(byte_data[start_byte:start_byte+4], byteorder='big', signed=True)
+                        stream_an_units.append(ConfigFrame1._int2anunit(an_unit))
                         start_byte += 4
 
                     an_units.append(stream_an_units)
 
                     stream_dig_units = []
                     for _ in range(digital_num[i]):
-                        stream_dig_units.append((
-                            int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False),
-                            int.from_bytes(byte_data[start_byte+2:start_byte+4], byteorder='big', signed=False)))
+                        stream_dig_units.append(ConfigFrame1._int2digunit(
+                                int.from_bytes(byte_data[start_byte:start_byte+4], byteorder='big', signed=False)))
                         start_byte += 4
 
                     dig_units.append(stream_dig_units)
@@ -1625,15 +1680,14 @@ class ConfigFrame1(CommonFrame):
 
                 an_units = []
                 for _ in range(analog_num):
-                    an_type = int.from_bytes(byte_data[start_byte:start_byte+1], byteorder='big', signed=False)
-                    an_scale = int.from_bytes(byte_data[start_byte+1:start_byte+3], byteorder='big', signed=True)
-                    an_units.append(ConfigFrame1._int2anunit(an_type, an_scale))
+                    an_unit = int.from_bytes(byte_data[start_byte:start_byte+4], byteorder='big', signed=False)
+                    an_units.append(ConfigFrame1._int2anunit(an_unit))
                     start_byte += 4
 
                 dig_units = []
                 for _ in range(digital_num):
-                    dig_units.append((int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False),
-                                      int.from_bytes(byte_data[start_byte+2:start_byte+4], byteorder='big', signed=False)))
+                    dig_units.append(ConfigFrame1._int2digunit(
+                                int.from_bytes(byte_data[start_byte:start_byte+4], byteorder='big', signed=False)))
                     start_byte += 4
 
                 fnom = ConfigFrame1._int2fnom(int.from_bytes(byte_data[start_byte:start_byte + 2],
@@ -2173,6 +2227,7 @@ class CommandFrame(CommonFrame):
         return CommandFrame.COMMAND_WORDS[self._command]
 
 
+    @staticmethod
     def _command2int(command):
 
         if not 0 <= command <= 65535:
@@ -2187,6 +2242,7 @@ class CommandFrame(CommonFrame):
             self._extended_frame = CommandFrame._extended2int(extended_frame)
 
 
+    @staticmethod
     def _extended2int(extended_frame):
 
         if len(extended_frame) > 65518:

@@ -2116,6 +2116,19 @@ class DataFrame(CommonFrame):
         return freq
 
 
+    def _int2freq(freq, data_format):
+
+        if isinstance(data_format, int):
+            data_format = DataFrame._int2format(data_format)
+
+        if data_format[3]:  # FREQ/DFREQ floating point
+            freq = unpack('!f', pack('!I', freq))[0]
+        else:
+            freq = unpack('!h', pack('!H', freq))[0]
+
+        return freq
+
+
     def set_dfreq(self, dfreq):
 
         if self._num_measurements > 1:
@@ -2155,6 +2168,19 @@ class DataFrame(CommonFrame):
             if not -32767 <= dfreq <= 32767:
                 raise ValueError("DFREQ must be 16-bit signed integer. -32767 <= DFREQ <= 32767.")
             dfreq = unpack('!H', pack('!h', dfreq))[0]
+
+        return dfreq
+
+
+    def _int2digital(dfreq, data_format):
+
+        if isinstance(data_format, int):
+            data_format = DataFrame._int2format(data_format)
+
+        if data_format[3]:  # FREQ/DFREQ floating point
+            dfreq = unpack('!f', pack('!I', dfreq))[0]
+        else:
+            dfreq = unpack('!h', pack('!H', dfreq))[0]
 
         return dfreq
 
@@ -2208,6 +2234,19 @@ class DataFrame(CommonFrame):
         return analog
 
 
+    def _int2analog(analog, data_format):
+
+        if isinstance(data_format, int):
+            data_format = DataFrame._int2format(data_format)
+
+        if data_format[2]:  # ANALOG float
+            analog = unpack('!f', pack('!I', analog))[0]
+        else:
+            analog = unpack('!h', pack('!H', analog))[0]
+
+        return analog
+
+
     def set_digital(self, digital):
 
         digital_list = []
@@ -2242,6 +2281,7 @@ class DataFrame(CommonFrame):
         if not -32767 <= digital <= 65535:
             raise ValueError("DIGITAL must be 16 bit word. -32767 <= DIGITAL <= 65535.")
         return unpack('!H', pack('!H', digital))[0]
+
 
     def convert2bytes(self):
 

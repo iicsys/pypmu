@@ -2009,20 +2009,22 @@ class DataFrame(CommonFrame):
         if not isinstance(phasor, tuple):
             raise TypeError("Provide phasor measurement as tuple. Rectangular - (Re, Im); Polar - (Mg, An).")
 
-        # Check if first bit in data_format is 1 -> polar representation else rectangular
-        if (data_format & 1) != 0:
+        if isinstance(data_format, int):
+            data_format = DataFrame._int2format(data_format)
 
-            # Check if second bit in data_format is 1 -> floating point representation
-            if (data_format & 2) != 0:
+        if data_format[0]:  # Polar representation
+
+            if data_format[1]:  # Floating Point
+
+                if not -3.142 <= phasor[1] <= 3.142:
+                    raise ValueError("Angle must be in range -3.14 <= ANGLE <= 3.14")
 
                 mg = pack('!f', float(phasor[0]))
                 an = pack('!f', float(phasor[1]))
                 measurement = mg + an
 
-                return int.from_bytes(measurement, 'big', signed=False)
+            else:  # Polar 16-bit representations
 
-            else:
-                # Polar 16-bit representations
                 if not 0 <= phasor[0] <= 65535:
                     raise ValueError("Magnitude must be 16-bit unsigned integer. 0 <= MAGNITUDE <= 65535.")
 
@@ -2030,35 +2032,45 @@ class DataFrame(CommonFrame):
                     raise ValueError("Angle must be 16-bit signed integer in radians x (10^-4). "
                                      "-31416 <= ANGLE <= 31416.")
 
-                return (phasor[0] << 16) | phasor[1]
+                mg = pack('!H', phasor[0])
+                an = pack('!h', phasor[1])
+                measurement = mg + an
 
         else:
 
-            if (data_format & 2) != 0:
+            if data_format[1]:  # Rectangular floating point representation
 
-                # Rectangular floating point representation
                 re = pack('!f', float(phasor[0]))
                 im = pack('!f', float(phasor[1]))
                 measurement = re + im
 
-                return int.from_bytes(measurement, 'big', signed=False)
-
             else:
 
-                if not ((-65535 <= phasor[0] <= 65535) or (-65535 <= phasor[1] <= 65535)):
+                if not ((-32767 <= phasor[0] <= 32767) or (-32767 <= phasor[1] <= 32767)):
                     raise ValueError("Real and imaginary value must be 16-bit signed integers. "
-                                     "-31767 <= (Re,Im) <= 31767.")
+                                     "-32767 <= (Re,Im) <= 32767.")
 
-                return (phasor[0] << 16) | phasor[1]
+                re = pack('!h', phasor[0])
+                im = pack('!h', phasor[1])
+                measurement = re + im
+
+        return int.from_bytes(measurement, 'big', signed=False)
 
 
     @staticmethod
     def _int2phasor(phasor, data_format):
 
-        if (data_format & 2) != 0:
-            pass
-        else:
-            pass
+        if isinstance(data_format, int):
+            data_format = DataFrame._int2format(data_format)
+
+        if data_format[1]:  # Float representation
+            phasor = unpack('!ff', phasor.to_bytes(8, 'big', signed=False))
+        elif data_format[0]:  # Polar integer
+            phasor = unpack('!Hh', phasor.to_bytes(4, 'big', signed=False))
+        else:  # Rectangular integer
+            phasor = unpack('!hh', phasor.to_bytes(4, 'big', signed=False))
+
+        return phasor
 
 
     def set_freq(self, freq):
@@ -2088,13 +2100,20 @@ class DataFrame(CommonFrame):
 
     def _freq2int(freq, data_format):
 
-        # Check if third bit in data_format is 1 -> floating point representation
-        if (data_format & 8) != 0:
-            return unpack('!I', pack('!f', float(freq)))[0]
+        if isinstance(data_format, int):
+            data_format = DataFrame._int2format(data_format)
+
+        if data_format[3]:  # FREQ/DFREQ floating point
+            if not -32.767 <= freq <= 32.767:
+                raise ValueError("FREQ must be in range -32.767 <= FREQ <= 32.767.")
+
+            freq = unpack('!I', pack('!f', float(freq)))[0]
         else:
             if not -32767 <= freq <= 32767:
                 raise ValueError("FREQ must be 16-bit signed integer. -32767 <= FREQ <= 32767.")
-            return freq
+            freq = unpack('!H', pack('!h', freq))[0]
+
+        return freq
 
 
     def set_dfreq(self, dfreq):
@@ -2124,13 +2143,20 @@ class DataFrame(CommonFrame):
 
     def _dfreq2int(dfreq, data_format):
 
-        # Check if third bit in data_format is 1 -> floating point representation
-        if (data_format & 8) != 0:
-            return unpack('!I', pack('!f', float(dfreq)))[0]
+        if not -327.67 <= dfreq <= 327.67:
+                raise ValueError("DFREQ must be in range -32767 <= DFREQ <= 32767.")
+
+        if isinstance(data_format, int):
+            data_format = DataFrame._int2format(data_format)
+
+        if data_format[3]:  # FREQ/DFREQ floating point
+            dfreq = unpack('!I', pack('!f', float(dfreq)))[0]
         else:
             if not -32767 <= dfreq <= 32767:
-                raise ValueError("DFREQ must be 16-bit signed integer. -32767 <= FREQ <= 32767.")
-            return dfreq
+                raise ValueError("DFREQ must be 16-bit signed integer. -32767 <= DFREQ <= 32767.")
+            dfreq = unpack('!H', pack('!h', dfreq))[0]
+
+        return dfreq
 
 
     def set_analog(self, analog):
@@ -2168,14 +2194,18 @@ class DataFrame(CommonFrame):
 
     def _analog2int(analog, data_format):
 
-        # Check if third bit in data_format is 1 -> floating point representation
-        if (data_format & 4) != 0:
-            return unpack('!I', pack('!f', float(analog)))[0]
+        if isinstance(data_format, int):
+            data_format = DataFrame._int2format(data_format)
+
+        if data_format[2]:  # ANALOG float
+            analog = unpack('!I', pack('!f', float(analog)))[0]
         else:
             # User defined ranges - but fit in 16-bit (u)signed integer
-            if not -32767 <= analog <= 65535:
-                raise ValueError("ANALOG must be 16-bit (u)signed integer. -32767 <= FREQ <= 65535.")
-            return analog
+            if not -32767 <= analog <= 32767:
+                raise ValueError("ANALOG must be in range -32767 <= FREQ <= 65535.")
+            analog = unpack('!H', pack('!h', analog))[0]
+
+        return analog
 
 
     def set_digital(self, digital):
@@ -2211,8 +2241,7 @@ class DataFrame(CommonFrame):
 
         if not -32767 <= digital <= 65535:
             raise ValueError("DIGITAL must be 16 bit word. -32767 <= DIGITAL <= 65535.")
-        return digital
-
+        return unpack('!H', pack('!H', digital))[0]
 
     def convert2bytes(self):
 

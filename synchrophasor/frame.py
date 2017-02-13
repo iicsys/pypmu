@@ -2000,8 +2000,13 @@ class DataFrame(CommonFrame):
 
     def get_phasors(self):
 
-        return self._phasors
+        if all(isinstance(el, list) for el in self._phasors):
+            phasors = [[DataFrame._int2phasor(ph, self._data_format[i]) for ph in phasor]
+                       for i, phasor in enumerate(self._phasors)]
+        else:
+            phasors = [DataFrame._int2phasor(phasor, self._data_format) for phasor in self._phasors]
 
+        return phasors
 
     @staticmethod
     def _phasor2int(phasor, data_format):
@@ -2095,7 +2100,12 @@ class DataFrame(CommonFrame):
 
     def get_freq(self):
 
-        return self._freq
+        if isinstance(self._freq, list):
+            freq = [DataFrame._int2freq(fr, self._data_format[i]) for i, fr in enumerate(self._freq)]
+        else:
+            freq = DataFrame._int2freq(self._freq, self._data_format)
+
+        return freq
 
 
     def _freq2int(freq, data_format):
@@ -2151,7 +2161,12 @@ class DataFrame(CommonFrame):
 
     def get_dfreq(self):
 
-        return self._dfreq
+        if isinstance(self._dfreq, list):
+            dfreq = [DataFrame._int2dfreq(dfr, self._data_format[i]) for i, dfr in enumerate(self._dfreq)]
+        else:
+            dfreq = DataFrame._int2dfreq(self._dfreq, self._data_format)
+
+        return dfreq
 
 
     def _dfreq2int(dfreq, data_format):
@@ -2215,7 +2230,13 @@ class DataFrame(CommonFrame):
 
     def get_analog(self):
 
-        return self._analog
+        if all(isinstance(el, list) for el in self._analog):
+            analog = [[DataFrame._int2analog(an, self._data_format[i]) for an in analog]
+                       for i, analog in enumerate(self._analog)]
+        else:
+            analog = [DataFrame._int2analog(an, self._data_format) for an in self._analog]
+
+        return analog
 
 
     def _analog2int(analog, data_format):
@@ -2337,7 +2358,51 @@ class DataFrame(CommonFrame):
             start_byte = 14
 
             if num_pmu > 1:
-                pass
+
+                stat, phasors, freq, dfreq, analog, digital = [[] for _ in range(6)]
+
+                for i in range(num_pmu):
+
+                    st = DataFrame._int2stat(int.from_bytes(byte_data[start_byte:start_byte+2],
+                                                            byteorder='big', signed=False))
+                    stat.append(st)
+                    start_byte += 2
+
+                    phasor_size = 8 if data_format[i][1] else 4
+                    stream_phasors = []
+                    for _ in range(phasor_num[i]):
+                        phasor = DataFrame._int2phasor(int.from_bytes(byte_data[start_byte:start_byte+phasor_size],
+                                                                      byteorder='big', signed=False), data_format[i])
+                        stream_phasors.append(phasor)
+                        start_byte += phasor_size
+                    phasors.append(stream_phasors)
+
+                    freq_size = 4 if data_format[i][3] else 2
+                    stream_freq = DataFrame._int2freq(int.from_bytes(byte_data[start_byte:start_byte+freq_size],
+                                                                     byteorder='big', signed=False), data_format[i])
+                    start_byte += freq_size
+                    freq.append(stream_freq)
+
+                    stream_dfreq = DataFrame._int2dfreq(int.from_bytes(byte_data[start_byte:start_byte+freq_size],
+                                                                       byteorder='big', signed=False), data_format[i])
+                    start_byte += freq_size
+                    dfreq.append(stream_dfreq)
+
+                    analog_size = 4 if data_format[i][2] else 2
+                    stream_analog = []
+                    for _ in range(analog_num[i]):
+                        an = DataFrame._int2analog(int.from_bytes(byte_data[start_byte:start_byte+analog_size],
+                                                                  byteorder='big', signed=False), data_format[i])
+                        stream_analog.append(an)
+                        start_byte += analog_size
+                    analog.append(stream_analog)
+
+                    stream_digital = []
+                    for _ in range(digital_num[i]):
+                        dig = int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False)
+                        stream_digital.append(dig)
+                        start_byte += 2
+                    digital.append(stream_digital)
             else:
 
                 stat = DataFrame._int2stat(int.from_bytes(byte_data[start_byte:start_byte+2],

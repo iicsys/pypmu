@@ -2172,7 +2172,7 @@ class DataFrame(CommonFrame):
         return dfreq
 
 
-    def _int2digital(dfreq, data_format):
+    def _int2dfreq(dfreq, data_format):
 
         if isinstance(data_format, int):
             data_format = DataFrame._int2format(data_format)
@@ -2317,8 +2317,68 @@ class DataFrame(CommonFrame):
 
 
     @staticmethod
-    def convert2frame(byte_data):
-        return byte_data
+    def convert2frame(byte_data, cfg: ConfigFrame1):
+
+        try:
+
+            if not CommonFrame._check_crc(byte_data):
+                raise FrameError("CRC failed. Configuration frame not valid.")
+
+            num_pmu = cfg.get_num_pmu()
+            data_format = cfg.get_data_format()
+            phasor_num = cfg.get_phasor_num()
+            analog_num = cfg.get_analog_num()
+            digital_num = cfg.get_digital_num()
+
+            pmu_code = int.from_bytes(byte_data[4:6], byteorder='big', signed=False)
+            soc = int.from_bytes(byte_data[6:10], byteorder='big', signed=False)
+            frasec = CommonFrame._int2frasec(int.from_bytes(byte_data[10:14], byteorder='big', signed=False))
+
+            start_byte = 14
+
+            if num_pmu > 1:
+                pass
+            else:
+
+                stat = DataFrame._int2stat(int.from_bytes(byte_data[start_byte:start_byte+2],
+                                                          byteorder='big', signed=False))
+                start_byte += 2
+
+                phasor_size = 8 if data_format[1] else 4
+                phasors = []
+                for _ in range(phasor_num):
+                    phasor = DataFrame._int2phasor(int.from_bytes(byte_data[start_byte:start_byte+phasor_size],
+                                                                  byteorder='big', signed=False), data_format)
+                    phasors.append(phasor)
+                    start_byte += phasor_size
+
+                freq_size = 4 if data_format[3] else 2
+                freq = DataFrame._int2freq(int.from_bytes(byte_data[start_byte:start_byte+freq_size],
+                                                          byteorder='big', signed=False), data_format)
+                start_byte += freq_size
+
+                dfreq = DataFrame._int2dfreq(int.from_bytes(byte_data[start_byte:start_byte+freq_size], byteorder='big',
+                                                            signed=False), data_format)
+                start_byte += freq_size
+
+                analog_size = 4 if data_format[2] else 2
+                analog = []
+                for _ in range(analog_num):
+                    an = DataFrame._int2analog(int.from_bytes(byte_data[start_byte:start_byte+analog_size],
+                                                                  byteorder='big', signed=False), data_format)
+                    analog.append(an)
+                    start_byte += analog_size
+
+                digital = []
+                for _ in range(digital_num):
+                    dig = int.from_bytes(byte_data[start_byte:start_byte+2], byteorder='big', signed=False)
+                    digital.append(dig)
+                    start_byte += 2
+
+            return DataFrame(pmu_code, stat, phasors, freq, dfreq, analog, digital, data_format, num_pmu, soc, frasec)
+
+        except Exception as error:
+            raise FrameError("Error while creating Data frame: " + str(error))
 
 
 class CommandFrame(CommonFrame):

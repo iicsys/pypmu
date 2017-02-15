@@ -26,7 +26,7 @@ __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
 __license__ = "BSD-3"
-__version__ = "0.2"
+__version__ = "0.3"
 
 
 class CommonFrame(metaclass=ABCMeta):
@@ -630,7 +630,7 @@ class CommonFrame(metaclass=ABCMeta):
 
 
     @abstractmethod
-    def convert2frame(byte_data):
+    def convert2frame(byte_data, cfg=None):
 
         convert_method = {
             0: DataFrame.convert2frame,
@@ -646,6 +646,9 @@ class CommonFrame(metaclass=ABCMeta):
 
         # Get second byte and determine frame type by shifting right to get higher 4 bits
         frame_type = int.from_bytes([byte_data[1]], byteorder='big', signed=False) >> 4
+
+        if frame_type == 0:  # DataFrame pass Configuration to decode message
+            return convert_method[frame_type](byte_data, cfg)
 
         return convert_method[frame_type](byte_data)
 
@@ -1125,7 +1128,10 @@ class ConfigFrame1(CommonFrame):
         if not 0 <= scale <= 16777215:
             raise ValueError("PHUNIT scale out of range. 0 <= PHUNIT <= 16777215.")
 
-        if phasor_type == 'i':  # TODO: Check if valid phasor_type
+        if phasor_type not in ['v', 'i']:
+            raise ValueError("Phasor type should be 'v' or 'i'.")
+
+        if phasor_type == 'i':
             phunit = 1 << 24
             return phunit | scale
         else:
@@ -1839,15 +1845,15 @@ class DataFrame(CommonFrame):
     TRIGGER_REASON_WORDS = { code: word for word, code in TRIGGER_REASON.items() }
 
 
-    def __init__(self, pmu_id_code, stat, phasors, freq, dfreq, analog, digital, data_format, num_measurements=1,
-                 soc=None, frasec=None):
+    def __init__(self, pmu_id_code, stat, phasors, freq, dfreq, analog, digital, cfg, soc=None, frasec=None):
+
+        if not isinstance(cfg, ConfigFrame2):
+            raise FrameError("CFG should describe current data stream (ConfigurationFrame2)")
 
         # Common frame for Configuration frame 2 with PMU simulator ID CODE which sends configuration frame.
         super().__init__('data', pmu_id_code, soc, frasec)
 
-        # TODO: ValueError for this
-        self.set_num_measurements(num_measurements)
-        self.set_data_format(data_format, num_measurements)
+        self.cfg = cfg
         self.set_stat(stat)
         self.set_phasors(phasors)
         self.set_freq(freq)
@@ -1857,7 +1863,10 @@ class DataFrame(CommonFrame):
 
     def set_num_measurements(self, num_measurements):
 
-        self._num_measurements = num_measurements
+        if not 1 <= num_measurements <= 65535:
+            raise FrameError("Number of PMUs out of range. 1 <= NUM_PMU <= 65535")
+        else:
+            self._num_measurements = num_measurements
 
 
     def get_num_measurements(self):
@@ -1986,7 +1995,6 @@ class DataFrame(CommonFrame):
 
             for i, phasor in enumerate(phasors):
                 ph_measurements = []
-                # TODO: Add phasor_num to check length of phasor list
                 for phasor_measurement in phasor:
                     ph_measurements.append(DataFrame._phasor2int(phasor_measurement, self._data_format[i]))
 
@@ -2171,9 +2179,6 @@ class DataFrame(CommonFrame):
 
     def _dfreq2int(dfreq, data_format):
 
-        if not -327.67 <= dfreq <= 327.67:
-                raise ValueError("DFREQ must be in range -32767 <= DFREQ <= 32767.")
-
         if isinstance(data_format, int):
             data_format = DataFrame._int2format(data_format)
 
@@ -2215,7 +2220,6 @@ class DataFrame(CommonFrame):
 
             for i, an in enumerate(analog):
                 an_measurements = []
-                # TODO: Add analog_num to check length of analog list
                 for analog_measurement in an:
                     an_measurements.append(DataFrame._analog2int(analog_measurement, self._data_format[i]))
 
@@ -2279,7 +2283,6 @@ class DataFrame(CommonFrame):
 
             for i, dig in enumerate(digital):
                 dig_measurements = []
-                # TODO: Add digital_num to check length of dig list
                 for digital_measurement in dig:
                     dig_measurements.append(DataFrame._digital2int(digital_measurement))
 
@@ -2338,7 +2341,7 @@ class DataFrame(CommonFrame):
 
 
     @staticmethod
-    def convert2frame(byte_data, cfg: ConfigFrame1):
+    def convert2frame(byte_data, cfg):
 
         try:
 

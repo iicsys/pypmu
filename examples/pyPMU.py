@@ -39,7 +39,7 @@ hf = HeaderFrame(7,  # PMU_ID
 
 df = DataFrame(7,  # PMU_ID
                ('ok', True, 'timestamp', False, False, False, 0, '<10', 0),  # STAT WORD - Check DataFrame set_stat()
-               [(14635, 0), (58218, 52860), (58218, 12675), (1092, 0)],  # PHASORS (3 - v, 1 - i)
+               [(14635, 0), (-7318, -12676), (-7318, 12675), (1092, 0)],  # PHASORS (3 - v, 1 - i)
                2500,  # Frequency deviation from nominal in mHz
                0,  # Rate of Change of Frequency
                [100, 1000, 10000],  # Analog Values

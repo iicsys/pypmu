@@ -10,7 +10,7 @@ __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
 __license__ = "BSD-3"
-__version__ = "0.1"
+__version__ = "0.2"
 
 data_hex_string = 'aa0100341e3644853600000041b10000392b0000e36ace7ce36a31830444000009c4000042c80000447a0000461c4000' \
                   '3c12d43f'

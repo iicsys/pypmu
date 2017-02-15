@@ -13,7 +13,7 @@ __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
 __license__ = "BSD-3"
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 
 class Pmu(object):
@@ -174,7 +174,7 @@ class Pmu(object):
                                              [(1, 'pow'), (1, 'rms'), (1, 'peak')], [(0x0000, 0xffff)], 60, 22, 30)
 
         self.ieee_data_sample = DataFrame(7734, ('ok', True, 'timestamp', False, False, False, 0, '<10', 0),
-                                          [(14635, 0), (58218, 52860), (58218, 12675), (1092, 0)], 2500, 0,
+                                          [(14635, 0), (-7318, -12676), (-7318, 12675), (1092, 0)], 2500, 0,
                                           [100, 1000, 10000], [0x3c12], 0x0004)
 
         self.ieee_command_sample = CommandFrame(7734, 'start', None)
@@ -217,35 +217,32 @@ class Pmu(object):
             self.cfg2 = self.ieee_cfg2_sample
             self.cfg3 = None  # TODO: Configuration frame 3
 
-        elif isinstance(config, ConfigFrame1):
+        elif type(config) == ConfigFrame1:
             self.cfg1 = config
 
-        elif isinstance(config, ConfigFrame2):
+        elif type(config) == ConfigFrame2:
             self.cfg2 = config
             if not self.cfg1:  # If CFG-1 not set use current data stream configuration
                 self.cfg1 = config
 
-        elif isinstance(config, ConfigFrame3):
+        elif type(config) == ConfigFrame3:
             self.cfg3 = ConfigFrame3
 
         else:
             raise PmuError('Incorrect configuration!')
 
-        # Update data rate and PMU ID if changed:
-        if config:
+        # Update current data rate and PMU ID if changed:
+        if config and (type(config) == ConfigFrame2):
             self.pmu_id = config.get_id_code()
             self.data_rate = config.get_data_rate()
             self.data_format = config.get_data_format()
             self.num_pmu = config.get_num_pmu()
+            self.send(self.cfg2)
         else:
             self.pmu_id = self.ieee_cfg2_sample.get_id_code()
             self.data_rate = self.ieee_cfg2_sample.get_data_rate()
             self.data_format = self.ieee_cfg2_sample.get_data_format()
             self.num_pmu = self.ieee_cfg2_sample.get_num_pmu()
-
-        # self.send(self.cfg1)
-        self.send(self.cfg2)
-        # self.send(self.cfg3)
 
         self.logger.info("[%d] - PMU configuration changed.", self.pmu_id)
 
@@ -255,7 +252,7 @@ class Pmu(object):
         if isinstance(header, HeaderFrame):
             self.header = header
         elif isinstance(header, str):
-            self.header.header = header
+            self.header = HeaderFrame(self.pmu_id, header)
         else:
             PmuError('Incorrect header setup! Only HeaderFrame and string allowed.')
 
@@ -267,13 +264,12 @@ class Pmu(object):
 
     def set_id(self, pmu_id):
 
-        # self.cfg1.set_id_code(id)
+        self.cfg1.set_id_code(id)
         self.cfg2.set_id_code(pmu_id)
         # self.cfg3.set_id_code(id)
         self.pmu_id = pmu_id
 
         # Configuration changed - Notify all PDCs about new configuration
-        # self.send(self.cfg1)
         self.send(self.cfg2)
         # self.send(self.cfg3)
 
@@ -282,13 +278,12 @@ class Pmu(object):
 
     def set_data_rate(self, data_rate):
 
-        # self.cfg1.set_data_rate(data_rate)
+        self.cfg1.set_data_rate(data_rate)
         self.cfg2.set_data_rate(data_rate)
         # self.cfg3.set_data_rate(data_rate)
         self.data_rate = data_rate
 
         # Configuration changed - Notify all PDCs about new configuration
-        # self.send(self.cfg1)
         self.send(self.cfg2)
         # self.send(self.cfg3)
 
@@ -299,11 +294,10 @@ class Pmu(object):
 
         self.cfg1.set_data_format(data_format, self.cfg1.get_num_pmu())
         self.cfg2.set_data_format(data_format, self.cfg2.get_num_pmu())
-        self.cfg3.set_data_format(data_format, self.cfg3.get_num_pmu())
-        self.data_format = data_format
+        # self.cfg3.set_data_format(data_format, self.cfg3.get_num_pmu())
+        self.data_format = self.cfg2.get_data_format()
 
         # Configuration changed - Notify all PDCs about new configuration
-        # self.send(self.cfg1)
         self.send(self.cfg2)
         # self.send(self.cfg3)
 
@@ -336,10 +330,10 @@ class Pmu(object):
             if not (self.num_pmu == len(self.data_format) == len(phasors)):
                 raise PmuError('Incorrect input. Please provide PHASORS as list of lists with NUM_PMU elements.')
 
-            for i, df in self.data_format:  # TODO: Are you really going to check data format like this?
-                if df in [0, 1, 4, 5, 8, 12, 13]:  # Check if phasor representation is integer
+            for i, df in self.data_format:
+                if not df[1]:  # Check if phasor representation is integer
                     phasors[i] = map(lambda x: int(x / (0.00001 * self.cfg2.get_ph_units()[i])), phasors[i])
-        elif self.data_format in [0, 1, 4, 5, 8, 12, 13]:
+        elif not self.data_format[1]:
             phasors = map(lambda x: int(x / (0.00001 * self.cfg2.get_ph_units())), phasors)
 
         # AN_UNIT conversion
@@ -347,10 +341,10 @@ class Pmu(object):
             if not (self.num_pmu == len(self.data_format) == len(analog)):
                 raise PmuError('Incorrect input. Please provide analog ANALOG as list of lists with NUM_PMU elements.')
 
-            for i, df in self.data_format:  # TODO: Are you really going to check data format like this?
-                if df in [0, 1, 2, 3, 8, 9, 10]:  # Check if analog representation is integer
+            for i, df in self.data_format:
+                if not df[2]:  # Check if analog representation is integer
                     analog[i] = map(lambda x: int(x / self.cfg2.get_analog_units()[i]), analog[i])
-        elif self.data_format in [0, 1, 2, 3, 8, 9, 10]:
+        elif not self.data_format[2]:
             analog = map(lambda x: int(x / self.cfg2.get_analog_units()), analog)
 
         data_frame = DataFrame(self.pmu_id, stat, phasors, freq, dfreq, analog, digital,

@@ -1,7 +1,6 @@
 import logging
 import socket
 from sys import stdout
-
 from synchrophasor.frame import *
 
 
@@ -9,7 +8,7 @@ __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
 __license__ = "BSD-3"
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 
 class Pdc(object):
@@ -33,6 +32,9 @@ class Pdc(object):
         self.pmu_port = pmu_port
         self.pmu_address = (pmu_ip, pmu_port)
         self.pmu_socket = None
+        self.pmu_cfg1 = None
+        self.pmu_cfg2 = None
+        self.pmu_header = None
 
 
     def run(self):
@@ -98,11 +100,14 @@ class Pdc(object):
         self.pmu_socket.sendall(get_config.convert2bytes())
 
         config = self.get()
-        if isinstance(config, ConfigFrame1) or isinstance(config, ConfigFrame2):
-            return config
+        if type(config) == ConfigFrame1:
+            self.pmu_cfg1 = config
+        elif type(config) == ConfigFrame2:
+            self.pmu_cfg2 = config
         else:
-            # TODO: raise PdcError('Invalid Configuration message received')
-            return None
+            raise PdcError('Invalid Configuration message received')
+
+        return config
 
 
     def get(self):
@@ -137,7 +142,7 @@ class Pdc(object):
         # If complete message is received try to decode it
         if len(received_data) == total_frame_size:
             try:
-                received_message = CommonFrame.convert2frame(received_data)  # Try to decode received data
+                received_message = CommonFrame.convert2frame(received_data, self.pmu_cfg2)  # Try to decode received data
                 self.logger.debug("[%d] - Received %s from PMU (%s:%d)", self.pdc_id, type(received_message).__name__,
                                   self.pmu_ip, self.pmu_port)
             except FrameError:

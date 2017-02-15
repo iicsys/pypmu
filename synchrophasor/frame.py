@@ -1861,23 +1861,11 @@ class DataFrame(CommonFrame):
         self.set_analog(analog)
         self.set_digital(digital)
 
-    def set_num_measurements(self, num_measurements):
-
-        if not 1 <= num_measurements <= 65535:
-            raise FrameError("Number of PMUs out of range. 1 <= NUM_PMU <= 65535")
-        else:
-            self._num_measurements = num_measurements
-
-
-    def get_num_measurements(self):
-
-        return self._num_measurements
-
 
     def set_stat(self, stat):
 
-        if self._num_measurements > 1:
-            if not isinstance(stat, list) or self._num_measurements != len(stat):
+        if self.cfg._num_pmu > 1:
+            if not isinstance(stat, list) or self.cfg._num_pmu != len(stat):
                 raise TypeError("When number of measurements > 1 provide STAT as list with NUM_MEASUREMENTS elements.")
 
             stats = []  # Format tuples transformed to ints
@@ -1984,24 +1972,24 @@ class DataFrame(CommonFrame):
     def set_phasors(self, phasors):
 
         phasors_list = []  # Format tuples transformed to ints
-        if self._num_measurements > 1:
-            if not isinstance(phasors, list) or self._num_measurements != len(phasors):
+        if self.cfg._num_pmu > 1:
+            if not isinstance(phasors, list) or self.cfg._num_pmu != len(phasors):
                 raise TypeError("When number of measurements > 1 provide PHASORS as list of tuple list with "
                                 "NUM_MEASUREMENTS elements.")
 
-            if not isinstance(self._data_format, list) or self._num_measurements != len(self._data_format):
+            if not isinstance(self.cfg._data_format, list) or self.cfg._num_pmu != len(self.cfg._data_format):
                 raise TypeError("When number of measurements > 1 provide DATA_FORMAT as list with "
                                 "NUM_MEASUREMENTS elements.")
 
             for i, phasor in enumerate(phasors):
                 ph_measurements = []
                 for phasor_measurement in phasor:
-                    ph_measurements.append(DataFrame._phasor2int(phasor_measurement, self._data_format[i]))
+                    ph_measurements.append(DataFrame._phasor2int(phasor_measurement, self.cfg._data_format[i]))
 
                 phasors_list.append(ph_measurements)
         else:
             for phasor_measurement in phasors:
-                phasors_list.append(DataFrame._phasor2int(phasor_measurement, self._data_format))
+                phasors_list.append(DataFrame._phasor2int(phasor_measurement, self.cfg._data_format))
 
         self._phasors = phasors_list
 
@@ -2009,10 +1997,10 @@ class DataFrame(CommonFrame):
     def get_phasors(self):
 
         if all(isinstance(el, list) for el in self._phasors):
-            phasors = [[DataFrame._int2phasor(ph, self._data_format[i]) for ph in phasor]
+            phasors = [[DataFrame._int2phasor(ph, self.cfg._data_format[i]) for ph in phasor]
                        for i, phasor in enumerate(self._phasors)]
         else:
-            phasors = [DataFrame._int2phasor(phasor, self._data_format) for phasor in self._phasors]
+            phasors = [DataFrame._int2phasor(phasor, self.cfg._data_format) for phasor in self._phasors]
 
         return phasors
 
@@ -2088,30 +2076,30 @@ class DataFrame(CommonFrame):
 
     def set_freq(self, freq):
 
-        if self._num_measurements > 1:
-            if not isinstance(freq, list) or self._num_measurements != len(freq):
+        if self.cfg._num_pmu > 1:
+            if not isinstance(freq, list) or self.cfg._num_pmu != len(freq):
                 raise TypeError("When number of measurements > 1 provide FREQ as list with "
                                 "NUM_MEASUREMENTS elements.")
 
-            if not isinstance(self._data_format, list) or self._num_measurements != len(self._data_format):
+            if not isinstance(self.cfg._data_format, list) or self.cfg._num_pmu != len(self.cfg._data_format):
                 raise TypeError("When number of measurements > 1 provide DATA_FORMAT as list with "
                                 "NUM_MEASUREMENTS elements.")
 
             freq_list = []  # Format tuples transformed to ints
             for i, fr in enumerate(freq):
-                freq_list.append(DataFrame._freq2int(fr, self._data_format[i]))
+                freq_list.append(DataFrame._freq2int(fr, self.cfg._data_format[i]))
 
             self._freq = freq_list
         else:
-            self._freq = DataFrame._freq2int(freq, self._data_format)
+            self._freq = DataFrame._freq2int(freq, self.cfg._data_format)
 
 
     def get_freq(self):
 
         if isinstance(self._freq, list):
-            freq = [DataFrame._int2freq(fr, self._data_format[i]) for i, fr in enumerate(self._freq)]
+            freq = [DataFrame._int2freq(fr, self.cfg._data_format[i]) for i, fr in enumerate(self._freq)]
         else:
-            freq = DataFrame._int2freq(self._freq, self._data_format)
+            freq = DataFrame._int2freq(self._freq, self.cfg._data_format)
 
         return freq
 
@@ -2149,30 +2137,30 @@ class DataFrame(CommonFrame):
 
     def set_dfreq(self, dfreq):
 
-        if self._num_measurements > 1:
-            if not isinstance(dfreq, list) or self._num_measurements != len(dfreq):
+        if self.cfg._num_pmu > 1:
+            if not isinstance(dfreq, list) or self.cfg._num_pmu != len(dfreq):
                 raise TypeError("When number of measurements > 1 provide DFREQ as list with "
                                 "NUM_MEASUREMENTS elements.")
 
-            if not isinstance(self._data_format, list) or self._num_measurements != len(self._data_format):
+            if not isinstance(self.cfg._data_format, list) or self.cfg._num_pmu != len(self.cfg._data_format):
                 raise TypeError("When number of measurements > 1 provide DATA_FORMAT as list with "
                                 "NUM_MEASUREMENTS elements.")
 
             dfreq_list = []  # Format tuples transformed to ints
             for i, dfr in enumerate(dfreq):
-                dfreq_list.append(DataFrame._dfreq2int(dfr, self._data_format[i]))
+                dfreq_list.append(DataFrame._dfreq2int(dfr, self.cfg._data_format[i]))
 
             self._dfreq = dfreq_list
         else:
-            self._dfreq = DataFrame._dfreq2int(dfreq, self._data_format)
+            self._dfreq = DataFrame._dfreq2int(dfreq, self.cfg._data_format)
 
 
     def get_dfreq(self):
 
         if isinstance(self._dfreq, list):
-            dfreq = [DataFrame._int2dfreq(dfr, self._data_format[i]) for i, dfr in enumerate(self._dfreq)]
+            dfreq = [DataFrame._int2dfreq(dfr, self.cfg._data_format[i]) for i, dfr in enumerate(self._dfreq)]
         else:
-            dfreq = DataFrame._int2dfreq(self._dfreq, self._data_format)
+            dfreq = DataFrame._int2dfreq(self._dfreq, self.cfg._data_format)
 
         return dfreq
 
@@ -2209,25 +2197,25 @@ class DataFrame(CommonFrame):
 
         analog_list = []
         # Format tuples transformed to ints
-        if self._num_measurements > 1:
-            if not isinstance(analog, list) or self._num_measurements != len(analog):
+        if self.cfg._num_pmu > 1:
+            if not isinstance(analog, list) or self.cfg._num_pmu != len(analog):
                 raise TypeError("When number of measurements > 1 provide ANALOG as list of list with "
                                 "NUM_MEASUREMENTS elements.")
 
-            if not isinstance(self._data_format, list) or self._num_measurements != len(self._data_format):
+            if not isinstance(self.cfg._data_format, list) or self.cfg._num_pmu != len(self.cfg._data_format):
                 raise TypeError("When number of measurements > 1 provide DATA_FORMAT as list with "
                                 "NUM_MEASUREMENTS elements.")
 
             for i, an in enumerate(analog):
                 an_measurements = []
                 for analog_measurement in an:
-                    an_measurements.append(DataFrame._analog2int(analog_measurement, self._data_format[i]))
+                    an_measurements.append(DataFrame._analog2int(analog_measurement, self.cfg._data_format[i]))
 
                 analog_list.append(an_measurements)
 
         else:
             for analog_measurement in analog:
-                analog_list.append(DataFrame._analog2int(analog_measurement, self._data_format))
+                analog_list.append(DataFrame._analog2int(analog_measurement, self.cfg._data_format))
 
         self._analog = analog_list
 
@@ -2235,10 +2223,10 @@ class DataFrame(CommonFrame):
     def get_analog(self):
 
         if all(isinstance(el, list) for el in self._analog):
-            analog = [[DataFrame._int2analog(an, self._data_format[i]) for an in analog]
+            analog = [[DataFrame._int2analog(an, self.cfg._data_format[i]) for an in analog]
                        for i, analog in enumerate(self._analog)]
         else:
-            analog = [DataFrame._int2analog(an, self._data_format) for an in self._analog]
+            analog = [DataFrame._int2analog(an, self.cfg._data_format) for an in self._analog]
 
         return analog
 
@@ -2276,8 +2264,8 @@ class DataFrame(CommonFrame):
 
         digital_list = []
         # Format tuples transformed to ints
-        if self._num_measurements > 1:
-            if not isinstance(digital, list) or self._num_measurements != len(digital):
+        if self.cfg._num_pmu > 1:
+            if not isinstance(digital, list) or self.cfg._num_pmu != len(digital):
                 raise TypeError("When number of measurements > 1 provide DIGITAL as list of lists with "
                                 "NUM_MEASUREMENTS elements.")
 
@@ -2310,9 +2298,9 @@ class DataFrame(CommonFrame):
     def convert2bytes(self):
 
         # Convert DataFrame message to bytes
-        if not self._num_measurements > 1:
+        if not self.cfg._num_pmu > 1:
 
-            data_format_size = CommonFrame._get_data_format_size(self._data_format)
+            data_format_size = CommonFrame._get_data_format_size(self.cfg._data_format)
 
             df_b = self._stat.to_bytes(2, 'big') + list2bytes(self._phasors, data_format_size['phasor']) + \
                    self._freq.to_bytes(data_format_size['freq'], 'big') + \
@@ -2321,9 +2309,9 @@ class DataFrame(CommonFrame):
         else:
             # Concatenate measurements as many as num_measurements tells
             df_b = None
-            for i in range(self._num_measurements):
+            for i in range(self.cfg._num_pmu):
 
-                data_format_size = CommonFrame._get_data_format_size(self._data_format[i])
+                data_format_size = CommonFrame._get_data_format_size(self.cfg._data_format[i])
 
                 df_b_i = self._stat[i].to_bytes(2, 'big') + \
                          list2bytes(self._phasors[i], data_format_size['phasor']) + \
@@ -2443,7 +2431,7 @@ class DataFrame(CommonFrame):
                     digital.append(dig)
                     start_byte += 2
 
-            return DataFrame(pmu_code, stat, phasors, freq, dfreq, analog, digital, data_format, num_pmu, soc, frasec)
+            return DataFrame(pmu_code, stat, phasors, freq, dfreq, analog, digital, cfg, soc, frasec)
 
         except Exception as error:
             raise FrameError("Error while creating Data frame: " + str(error))

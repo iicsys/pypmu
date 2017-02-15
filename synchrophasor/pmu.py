@@ -175,7 +175,7 @@ class Pmu(object):
 
         self.ieee_data_sample = DataFrame(7734, ('ok', True, 'timestamp', False, False, False, 0, '<10', 0),
                                           [(14635, 0), (-7318, -12676), (-7318, 12675), (1092, 0)], 2500, 0,
-                                          [100, 1000, 10000], [0x3c12], 0x0004)
+                                          [100, 1000, 10000], [0x3c12], self.ieee_cfg2_sample)
 
         self.ieee_command_sample = CommandFrame(7734, 'start', None)
 
@@ -347,8 +347,7 @@ class Pmu(object):
         elif not self.data_format[2]:
             analog = map(lambda x: int(x / self.cfg2.get_analog_units()), analog)
 
-        data_frame = DataFrame(self.pmu_id, stat, phasors, freq, dfreq, analog, digital,
-                               self.data_format, self.num_pmu)
+        data_frame = DataFrame(self.pmu_id, stat, phasors, freq, dfreq, analog, digital, self.cfg2)
 
         if not soc and not frasec:
             data_frame.set_time()

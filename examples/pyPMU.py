@@ -44,7 +44,7 @@ df = DataFrame(7,  # PMU_ID
                0,  # Rate of Change of Frequency
                [100, 1000, 10000],  # Analog Values
                [0x3c12],  # Digital status word
-               0x0004)  # Data Format
+               cfg)  # Data Stream Configuration
 
 pmu.set_configuration(cfg)
 pmu.set_header(hf)

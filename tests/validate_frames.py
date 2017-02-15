@@ -12,35 +12,6 @@ __credits__ = []
 __license__ = "BSD-3"
 __version__ = "0.2"
 
-data_hex_string = 'aa0100341e3644853600000041b10000392b0000e36ace7ce36a31830444000009c4000042c80000447a0000461c4000' \
-                  '3c12d43f'
-
-df = DataFrame(7734, ('ok', True, 'timestamp', False, False, False, 0, '<10', 0),
-               [(14635, 0), (-7318, -12676), (-7318, 12675), (1092, 0)], 2500, 0, [100, 1000, 10000], [0x3c12], 0x0004,
-               soc=1149580800, frasec=16817)
-
-# df.set_soc(1149580800)
-# df.set_frasec(16817)
-
-data_hex_result = str(binascii.hexlify(df.convert2bytes()), 'utf-8')
-
-assert data_hex_string == data_hex_result, "Data Frame Error."
-
-data_multi_hex_string = 'aa0100581e3644853600000041b10000392b0000e36ace7ce36a31830444000009c4000042c80000447a0000' \
-                        '461c40003c120000392b0000e36ace7ce36a31830444000009c4000042c80000447a0000461c40003c12bd52'
-
-dfm = DataFrame(7734, [('ok', True, 'timestamp', False, False, False, 0, '<10', 0),
-                       ('ok', True, 'timestamp', False, False, False, 0, '<10', 0)],
-                [[(14635, 0), (-7318, -12676), (-7318, 12675), (1092, 0)],
-                 [(14635, 0), (-7318, -12676), (-7318, 12675), (1092, 0)]], [2500, 2500], [0, 0],
-                [[100, 1000, 10000], [100, 1000, 10000]], [[0x3c12], [0x3c12]], [0x0004, 0x0004], 2, 1149580800, 16817)
-
-# dfm.set_soc(1149580800)
-# dfm.set_frasec(16817)
-
-data_multi_hex_result = str(binascii.hexlify(dfm.convert2bytes()), 'utf-8')
-
-assert data_multi_hex_string == data_multi_hex_result, "Data Frame Multistreaming Error."
 
 cfg_hex_string = 'aa3101c61e36448527f056071098000f4240000153746174696f6e2041202020202020201e360004000400030001564120' \
                  '20202020202020202020202020564220202020202020202020202020205643202020202020202020202020202049312020' \
@@ -115,6 +86,38 @@ cfgm = ConfigFrame2(7734, 1000000, 2, ["Station A", "Station A"], [7734, 7734], 
 
 cfg_multi_hex_result = str(binascii.hexlify(cfgm.convert2bytes()), 'utf-8')
 assert cfg_multi_hex_result == cfg_multi_hex_string, "Configuration Frame v2 Multistreaming Error."
+
+
+data_hex_string = 'aa0100341e3644853600000041b10000392b0000e36ace7ce36a31830444000009c4000042c80000447a0000461c4000' \
+                  '3c12d43f'
+
+df = DataFrame(7734, ('ok', True, 'timestamp', False, False, False, 0, '<10', 0),
+               [(14635, 0), (-7318, -12676), (-7318, 12675), (1092, 0)], 2500, 0, [100, 1000, 10000], [0x3c12], cfg,
+               1149580800, 16817)
+
+# df.set_soc(1149580800)
+# df.set_frasec(16817)
+
+data_hex_result = str(binascii.hexlify(df.convert2bytes()), 'utf-8')
+
+assert data_hex_string == data_hex_result, "Data Frame Error."
+
+data_multi_hex_string = 'aa0100581e3644853600000041b10000392b0000e36ace7ce36a31830444000009c4000042c80000447a0000' \
+                        '461c40003c120000392b0000e36ace7ce36a31830444000009c4000042c80000447a0000461c40003c12bd52'
+
+dfm = DataFrame(7734, [('ok', True, 'timestamp', False, False, False, 0, '<10', 0),
+                       ('ok', True, 'timestamp', False, False, False, 0, '<10', 0)],
+                [[(14635, 0), (-7318, -12676), (-7318, 12675), (1092, 0)],
+                 [(14635, 0), (-7318, -12676), (-7318, 12675), (1092, 0)]], [2500, 2500], [0, 0],
+                [[100, 1000, 10000], [100, 1000, 10000]], [[0x3c12], [0x3c12]], cfgm, 1149580800, 16817)
+
+# dfm.set_soc(1149580800)
+# dfm.set_frasec(16817)
+
+data_multi_hex_result = str(binascii.hexlify(dfm.convert2bytes()), 'utf-8')
+
+assert data_multi_hex_string == data_multi_hex_result, "Data Frame Multistreaming Error."
+
 
 hf_hex_string = 'aa1100271e36448560300f0bbfd048656c6c6f2049276d20486561646572204672616d652e17cc'
 

@@ -1982,12 +1982,20 @@ class DataFrame(CommonFrame):
                                 "NUM_MEASUREMENTS elements.")
 
             for i, phasor in enumerate(phasors):
+
+                if not isinstance(phasor, list) or self.cfg._phasor_num[i] != len(phasor):
+                    raise TypeError("Provide PHASORS as list of tuples with PHASOR_NUM tuples")
+
                 ph_measurements = []
                 for phasor_measurement in phasor:
                     ph_measurements.append(DataFrame._phasor2int(phasor_measurement, self.cfg._data_format[i]))
 
                 phasors_list.append(ph_measurements)
         else:
+
+            if not isinstance(phasors, list) or self.cfg._phasor_num != len(phasors):
+                raise TypeError("Provide PHASORS as list of tuples with PHASOR_NUM tuples")
+
             for phasor_measurement in phasors:
                 phasors_list.append(DataFrame._phasor2int(phasor_measurement, self.cfg._data_format))
 
@@ -2207,6 +2215,10 @@ class DataFrame(CommonFrame):
                                 "NUM_MEASUREMENTS elements.")
 
             for i, an in enumerate(analog):
+
+                if not isinstance(an, list) or self.cfg._analog_num[i] != len(an):
+                    raise TypeError("Provide ANALOG as list with ANALOG_NUM elements")
+
                 an_measurements = []
                 for analog_measurement in an:
                     an_measurements.append(DataFrame._analog2int(analog_measurement, self.cfg._data_format[i]))
@@ -2214,6 +2226,10 @@ class DataFrame(CommonFrame):
                 analog_list.append(an_measurements)
 
         else:
+
+            if not isinstance(analog, list) or self.cfg._analog_num!= len(analog):
+                    raise TypeError("Provide ANALOG as list with ANALOG_NUM elements")
+
             for analog_measurement in analog:
                 analog_list.append(DataFrame._analog2int(analog_measurement, self.cfg._data_format))
 
@@ -2224,7 +2240,7 @@ class DataFrame(CommonFrame):
 
         if all(isinstance(el, list) for el in self._analog):
             analog = [[DataFrame._int2analog(an, self.cfg._data_format[i]) for an in analog]
-                       for i, analog in enumerate(self._analog)]
+                      for i, analog in enumerate(self._analog)]
         else:
             analog = [DataFrame._int2analog(an, self.cfg._data_format) for an in self._analog]
 
@@ -2270,6 +2286,10 @@ class DataFrame(CommonFrame):
                                 "NUM_MEASUREMENTS elements.")
 
             for i, dig in enumerate(digital):
+
+                if not isinstance(dig, list) or self.cfg._digital_num[i] != len(dig):
+                    raise TypeError("Provide DIGITAL as list with DIGITAL_NUM elements")
+
                 dig_measurements = []
                 for digital_measurement in dig:
                     dig_measurements.append(DataFrame._digital2int(digital_measurement))
@@ -2277,6 +2297,10 @@ class DataFrame(CommonFrame):
                 digital_list.append(dig_measurements)
 
         else:
+
+            if not isinstance(digital, list) or self.cfg._digital_num != len(digital):
+                    raise TypeError("Provide DIGITAL as list with DIGITAL_NUM elements")
+
             for digital_measurement in digital:
                 digital_list.append(DataFrame._digital2int(digital_measurement))
 

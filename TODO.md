@@ -10,9 +10,9 @@ This to-do list will help us to set priorities and define future work.
 * Upload to `pip`.
 * ~~Well, well, we might implement StreamSplitter with `Pdc()` and `Pmu()`?~~
 * ~~Calculate SOC if not defined in `__init()__` function.~~
-* Check phasor values list length using data format (`PHASOR_NUM`).
-* Check analog values list length using data format (`ANALOG_NUM`).
-* Check digital values list length using data format (`DIGITAL_NUM`).
+* ~~Check phasor values list length using data format (`PHASOR_NUM`).~~
+* ~~Check analog values list length using data format (`ANALOG_NUM`).~~
+* ~~Check digital values list length using data format (`DIGITAL_NUM`).~~
 * ~~Check flags when setting time base.~~
 
 ## Good to Have ##

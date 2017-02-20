@@ -1777,6 +1777,7 @@ class ConfigFrame2(ConfigFrame1):
 
         cfg = ConfigFrame1.convert2frame(byte_data)
         cfg.set_frame_type('cfg2')
+        cfg.__class__ = ConfigFrame2  # Casting to derived class
 
         return cfg
 

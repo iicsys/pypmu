@@ -17,6 +17,7 @@ import collections
 from abc import ABCMeta, abstractmethod
 from struct import pack, unpack
 from time import time
+from math import sqrt, atan2
 
 from synchrophasor.utils import crc16xmodem
 from synchrophasor.utils import list2bytes
@@ -26,7 +27,7 @@ __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
 __license__ = "BSD-3"
-__version__ = "0.3"
+__version__ = "0.3.1"
 
 
 class CommonFrame(metaclass=ABCMeta):
@@ -1950,7 +1951,7 @@ class DataFrame(CommonFrame):
     @staticmethod
     def _int2stat(stat):
 
-        measurement_status = DataFrame.MEASUREMENT_STATUS_WORDS[stat & 0xc000]
+        measurement_status = DataFrame.MEASUREMENT_STATUS_WORDS[stat >> 15]
         sync = bool(stat & 0x2000)
 
         if stat & 0x1000:
@@ -2002,13 +2003,34 @@ class DataFrame(CommonFrame):
         self._phasors = phasors_list
 
 
-    def get_phasors(self):
+    def get_phasors(self, convert2polar=True):
 
         if all(isinstance(el, list) for el in self._phasors):
+
             phasors = [[DataFrame._int2phasor(ph, self.cfg._data_format[i]) for ph in phasor]
                        for i, phasor in enumerate(self._phasors)]
+
+            if convert2polar:
+                for i, stream_phasors in enumerate(phasors):
+
+                    if not self.cfg.get_data_format()[i][1]:  # If not float representation scale back
+                        stream_phasors = [tuple([ph*self.cfg.get_ph_units()[i][j][0]*0.00001 for ph in phasor])
+                                       for j, phasor in enumerate(stream_phasors)]
+
+                        phasors[i] = stream_phasors
+
+                    if not self.cfg.get_data_format()[i][0]:  # If not polar convert to polar representation
+                        stream_phasors = [(sqrt(ph[0]**2 + ph[1]**2), atan2(ph[1], ph[0])) for ph in stream_phasors]
+                        phasors[i] = stream_phasors
         else:
             phasors = [DataFrame._int2phasor(phasor, self.cfg._data_format) for phasor in self._phasors]
+
+            if not self.cfg.get_data_format()[1]:  # If not float representation scale back
+                phasors = [tuple([ph*self.cfg.get_ph_units()[i][0]*0.00001 for ph in phasor])
+                                   for i, phasor in enumerate(phasors)]
+
+            if not self.cfg.get_data_format()[0]:  # If not polar convert to polar representation
+                phasors = [(sqrt(ph[0]**2 + ph[1]**2), atan2(ph[1], ph[0])) for ph in phasors]
 
         return phasors
 
@@ -2317,6 +2339,43 @@ class DataFrame(CommonFrame):
         if not -32767 <= digital <= 65535:
             raise ValueError("DIGITAL must be 16 bit word. -32767 <= DIGITAL <= 65535.")
         return unpack('!H', pack('!H', digital))[0]
+
+
+    def get_measurements(self):
+
+        measurements = []
+
+        if self.cfg._num_pmu > 1:
+
+            frequency = [self.cfg.get_fnom()[i] + freq / 1000 for i, freq in enumerate(self.get_freq())]
+
+            for i in range(self.cfg._num_pmu):
+
+                measurement = { 'stream_id': self.cfg.get_stream_id_code()[i],
+                                'stat': self.get_stat()[i][0],
+                                'phasors': self.get_phasors()[i],
+                                'analog': self.get_analog()[i],
+                                'digital': self.get_digital()[i],
+                                'frequency': self.cfg.get_fnom()[i] + self.get_freq()[i] / 1000,
+                                'rocof': self.get_dfreq()[i]}
+
+                measurements.append(measurement)
+        else:
+
+            measurements.append({ 'stream_id': self.cfg.get_stream_id_code(),
+                                  'stat': self.get_stat()[0],
+                                  'phasors': self.get_phasors(),
+                                  'analog': self.get_analog(),
+                                  'digital': self.get_digital(),
+                                  'frequency': self.cfg.get_fnom() + self.get_freq() / 1000,
+                                  'rocof': self.get_dfreq()
+                                })
+
+        data_frame = { 'pmu_id': self._pmu_id_code,
+                       'time': self.get_soc() + self.get_frasec()[0] / self.cfg.get_time_base(),
+                       'measurements': measurements }
+
+        return data_frame
 
 
     def convert2bytes(self):

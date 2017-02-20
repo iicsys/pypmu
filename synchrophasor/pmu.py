@@ -1,12 +1,19 @@
 import logging
-import multiprocessing
 import socket
 import threading
+import platform
 
 from select import select
 from sys import stdout
 from time import sleep
 from synchrophasor.frame import *
+
+if platform.system() == 'Windows':  # Use threading to avoid missing os.fork() feature
+    from threading import Thread as Process
+    from queue import Queue
+else:
+    from multiprocessing import Process
+    from multiprocessing import Queue
 
 
 __author__ = "Stevan Sandi"
@@ -140,11 +147,10 @@ class Pmu(object):
             conn, address = self.socket.accept()
 
             # Create Queue which will represent buffer for specific client and add it o list of all client buffers
-            buffer = multiprocessing.Queue()
+            buffer = Queue()
             self.client_buffers.append(buffer)
 
-            process = multiprocessing.Process(
-                    target=self.pmu_handler, args=(conn, address, buffer))
+            process = Process(target=self.pmu_handler, args=(conn, address, buffer))  # If on Windows Process = Thread
             process.daemon = True
             process.start()
             self.clients.append(process)

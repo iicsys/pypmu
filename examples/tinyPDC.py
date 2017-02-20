@@ -1,5 +1,5 @@
 from synchrophasor.pdc import Pdc
-
+from synchrophasor.frame import DataFrame
 
 """
 tinyPDC will connect to pmu_ip:pmu_port and send request
@@ -17,7 +17,12 @@ config = pdc.get_config()  # Get configuration from PMU
 pdc.start()  # Request to start sending measurements
 
 while True:
+
     data = pdc.get()  # Keep receiving data
+
+    if type(data) == DataFrame:
+        print(data.get_measurements())
+
     if not data:
         pdc.quit()  # Close connection
         break

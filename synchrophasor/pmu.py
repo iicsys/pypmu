@@ -1,19 +1,13 @@
 import logging
 import socket
-import threading
-import platform
 
 from select import select
+from threading import Thread
+from multiprocessing import Queue
+from multiprocessing import Process
 from sys import stdout
 from time import sleep
 from synchrophasor.frame import *
-
-if platform.system() == 'Windows':  # Use threading to avoid missing os.fork() feature
-    from threading import Thread as Process
-    from queue import Queue
-else:
-    from multiprocessing import Process
-    from multiprocessing import Queue
 
 
 __author__ = "Stevan Sandi"
@@ -210,7 +204,7 @@ class Pmu(object):
         self.socket.bind((self.ip, self.port))
         self.socket.listen(5)
 
-        self.listener = threading.Thread(target=self.acceptor)  # Run acceptor thread to handle new connection
+        self.listener = Thread(target=self.acceptor)  # Run acceptor thread to handle new connection
         self.listener.daemon = True
         self.listener.start()
 

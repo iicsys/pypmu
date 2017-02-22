@@ -201,12 +201,13 @@ class Pmu(object):
 
         # Create TCP socket, bind port and listen for incoming connections
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((self.ip, self.port))
         self.socket.listen(5)
 
-        self.listener = Thread(target=self.acceptor)  # Run acceptor thread to handle new connection
-        self.listener.daemon = True
-        self.listener.start()
+        listener = Thread(target=self.acceptor)  # Run acceptor thread to handle new connection
+        listener.daemon = True
+        listener.start()
 
 
     def set_configuration(self, config=None):

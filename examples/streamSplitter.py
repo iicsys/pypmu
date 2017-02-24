@@ -9,7 +9,7 @@ listen_port for incoming connections from PDCs.
 """
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    sp = StreamSplitter(source_ip='127.0.0.1', source_port=1410, listen_ip='127.0.0.1', listen_port=1502)
+    sp = StreamSplitter(source_ip="127.0.0.1", source_port=1410, listen_ip="127.0.0.1", listen_port=1502)
     sp.run()

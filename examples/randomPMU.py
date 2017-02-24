@@ -11,9 +11,10 @@ values for phasors will be sent.
 """
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     pmu = Pmu(ip="127.0.0.1", port=1410)
+    pmu.logger.setLevel("DEBUG")
 
     cfg = ConfigFrame2(1410,  # PMU_ID
                        1000000,  # TIME_BASE
@@ -29,9 +30,9 @@ if __name__ == '__main__':
                         "BREAKER 6 STATUS", "BREAKER 7 STATUS", "BREAKER 8 STATUS", "BREAKER 9 STATUS",
                         "BREAKER A STATUS", "BREAKER B STATUS", "BREAKER C STATUS", "BREAKER D STATUS",
                         "BREAKER E STATUS", "BREAKER F STATUS", "BREAKER G STATUS"],  # Channel Names
-                       [(0, 'v'), (0, 'v'),
-                        (0, 'v')],  # Conversion factor for phasor channels - (float representation, not important)
-                       [(1, 'pow')],  # Conversion factor for analog channels
+                       [(0, "v"), (0, "v"),
+                        (0, "v")],  # Conversion factor for phasor channels - (float representation, not important)
+                       [(1, "pow")],  # Conversion factor for analog channels
                        [(0x0000, 0xffff)],  # Mask words for digital status words
                        50,  # Nominal frequency
                        1,  # Configuration change count

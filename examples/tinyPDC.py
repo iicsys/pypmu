@@ -8,9 +8,10 @@ to start sending measurements.
 """
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    pdc = Pdc(pdc_id=7, pmu_ip='127.0.0.1', pmu_port=1410)
+    pdc = Pdc(pdc_id=7, pmu_ip="127.0.0.1", pmu_port=1410)
+    pdc.logger.setLevel("DEBUG")
 
     pdc.run()  # Connect to PMU
 

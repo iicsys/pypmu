@@ -12,7 +12,7 @@ __version__ = "0.1.1"
 
 class StreamSplitter(object):
 
-    def __init__(self, source_ip, source_port, listen_ip, listen_port, pdc_id=1, method='tcp', buffer_size=2048):
+    def __init__(self, source_ip, source_port, listen_ip, listen_port, pdc_id=1, method="tcp", buffer_size=2048):
 
         self.pdc = Pdc(pdc_id, source_ip, source_port, buffer_size, method)
         self.pmu = Pmu(ip=listen_ip, port=listen_port, method=method, buffer_size=buffer_size, set_timestamp=False)

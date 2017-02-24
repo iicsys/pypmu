@@ -8,9 +8,10 @@ PMU described in IEEE C37.118.2 - Annex D.
 """
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     pmu = Pmu(ip="127.0.0.1", port=9991)
+    pmu.logger.setLevel("DEBUG")
 
     ph_v_conversion = int(300000.0 / 32768 * 100000)  # Voltage phasor conversion factor
     ph_i_conversion = int(15000.0 / 32768 * 100000)  # Current phasor conversion factor
@@ -29,9 +30,9 @@ if __name__ == '__main__':
                         "BREAKER 6 STATUS", "BREAKER 7 STATUS", "BREAKER 8 STATUS", "BREAKER 9 STATUS",
                         "BREAKER A STATUS", "BREAKER B STATUS", "BREAKER C STATUS", "BREAKER D STATUS",
                         "BREAKER E STATUS", "BREAKER F STATUS", "BREAKER G STATUS"],  # Channel Names
-                       [(ph_v_conversion, 'v'), (ph_v_conversion, 'v'),
-                        (ph_v_conversion, 'v'), (ph_i_conversion, 'i')],  # Conversion factor for phasor channels
-                       [(1, 'pow'), (1, 'rms'), (1, 'peak')],  # Conversion factor for analog channels
+                       [(ph_v_conversion, "v"), (ph_v_conversion, "v"),
+                        (ph_v_conversion, "v"), (ph_i_conversion, "i")],  # Conversion factor for phasor channels
+                       [(1, "pow"), (1, "rms"), (1, "peak")],  # Conversion factor for analog channels
                        [(0x0000, 0xffff)],  # Mask words for digital status words
                        60,  # Nominal frequency
                        1,  # Configuration change count
@@ -41,7 +42,7 @@ if __name__ == '__main__':
                      "Hello I'm nanoPMU!")  # Header Message
 
     df = DataFrame(7,  # PMU_ID
-                   ('ok', True, 'timestamp', False, False, False, 0, '<10', 0),  # STAT WORD - Check DataFrame set_stat()
+                   ("ok", True, "timestamp", False, False, False, 0, "<10", 0),  # STAT WORD - Check DataFrame set_stat()
                    [(14635, 0), (-7318, -12676), (-7318, 12675), (1092, 0)],  # PHASORS (3 - v, 1 - i)
                    2500,  # Frequency deviation from nominal in mHz
                    0,  # Rate of Change of Frequency

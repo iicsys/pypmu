@@ -4,7 +4,7 @@ Synchrophasor module represents implementation of IEEE C37.118.2
 standard in Python. `synchrophasor` module is still in development phase
 but we have few very interesting tools.
 
-#### Note: Latest Alpha release v0.2
+#### Note: Latest Alpha release v0.3
 
 ## Getting Started ##
 
@@ -207,7 +207,7 @@ connected PDCs:
 Since `synchrophasor` module is in early development phase we're
 missing few very important things.
 
-* We're working on Windows fix to support multiprocessing.
+* ~~We're working on Windows fix to support multiprocessing.~~
 * We don't have Configuration Frame ~~version 1 and~~ version 3 implemented
 but Configuration Frame version 2 is working just fine.
 * ~~We don't have `convert2frame()` methods for converting raw bytes

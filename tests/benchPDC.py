@@ -9,7 +9,7 @@ from time import sleep
 from synchrophasor.pdc import Pdc
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     argument_parser = ArgumentParser(description='benchPDC - will connect to given PDC'
                                                  'Usage example: '
@@ -23,6 +23,10 @@ if __name__ == '__main__':
     argument_parser.add_argument('-m', '--method', help='Transmission method TCP or UDP.',
                                  choices=['tcp', 'udp'], default='tcp')
     argument_parser.add_argument('-b', '--buffer', help='Transmission method buffer size.', default=2048, type=int)
+    argument_parser.add_argument('-l', '--log_level', help='Log level.',
+                                 choices=['CRITICAL', 'ERROR', 'WARN', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'],
+                                 default='INFO')
+
     arguments = argument_parser.parse_args()
 
     # Receive ideal number of measurements in 60s.
@@ -36,6 +40,7 @@ if __name__ == '__main__':
 
     pdc = Pdc(pdc_id=arguments.id, pmu_ip=arguments.ip, pmu_port=arguments.port,
               buffer_size=arguments.buffer, method=arguments.method)
+    pdc.logger.setLevel(arguments.log_level)
 
     pdc.run()  # Connect to PMU
 
@@ -43,8 +48,8 @@ if __name__ == '__main__':
     config = pdc.get_config()  # Get configuration from PMU
 
     # Create result folder
-    if not os.path.exists('results/' + str(arguments.data_rate)):
-        os.makedirs('results/' + str(arguments.data_rate))
+    if not os.path.exists("results/" + str(arguments.data_rate)):
+        os.makedirs("results/" + str(arguments.data_rate))
 
     log = "./results/{:d}/result_j{:d}_id_{:d}_{:s}.log".format(arguments.data_rate, arguments.jobs, arguments.id,
                                                                 timestamp)

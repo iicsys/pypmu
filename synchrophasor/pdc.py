@@ -14,15 +14,15 @@ __version__ = "0.1.2"
 class Pdc(object):
 
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     handler = logging.StreamHandler(stdout)
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
 
-    def __init__(self, pdc_id=1, pmu_ip='127.0.0.1', pmu_port=4712, buffer_size=2048, method='tcp'):
+    def __init__(self, pdc_id=1, pmu_ip="127.0.0.1", pmu_port=4712, buffer_size=2048, method="tcp"):
 
         self.pdc_id = pdc_id
         self.buffer_size = buffer_size
@@ -58,7 +58,7 @@ class Pdc(object):
         Request from PMU to start sending data
         :return: NoneType
         """
-        start = CommandFrame(self.pdc_id, 'start')
+        start = CommandFrame(self.pdc_id, "start")
         self.pmu_socket.sendall(start.convert2bytes())
         self.logger.info("[%d] - Requesting to start sending from PMU (%s:%d)", self.pdc_id, self.pmu_ip, self.pmu_port)
 
@@ -68,7 +68,7 @@ class Pdc(object):
         Request from PMU to start sending data
         :return: NoneType
         """
-        start = CommandFrame(self.pdc_id, 'stop')
+        start = CommandFrame(self.pdc_id, "stop")
         self.pmu_socket.sendall(start.convert2bytes())
         self.logger.info("[%d] - Requesting to stop sending from PMU (%s:%d)", self.pdc_id, self.pmu_ip, self.pmu_port)
 
@@ -78,7 +78,7 @@ class Pdc(object):
         Request for PMU header message
         :return: HeaderFrame
         """
-        get_header = CommandFrame(self.pdc_id, 'header')
+        get_header = CommandFrame(self.pdc_id, "header")
         self.pmu_socket.sendall(get_header.convert2bytes())
 
         self.logger.info("[%d] - Requesting header message from PMU (%s:%d)", self.pdc_id, self.pmu_ip, self.pmu_port)
@@ -87,13 +87,13 @@ class Pdc(object):
         if isinstance(header, HeaderFrame):
             return header
         else:
-            raise PdcError('Invalid Header message received')
+            raise PdcError("Invalid Header message received")
 
 
-    def get_config(self, version='cfg2'):
+    def get_config(self, version="cfg2"):
         """
         Request for Configuration frame.
-        :param version: string Possible values 'cfg1', 'cfg2' and 'cfg3'
+        :param version: string Possible values "cfg1", "cfg2" and "cfg3"
         :return: ConfigFrame
         """
         get_config = CommandFrame(self.pdc_id, version)
@@ -105,7 +105,7 @@ class Pdc(object):
         elif type(config) == ConfigFrame2:
             self.pmu_cfg2 = config
         else:
-            raise PdcError('Invalid Configuration message received')
+            raise PdcError("Invalid Configuration message received")
 
         return config
 
@@ -129,7 +129,7 @@ class Pdc(object):
             received_data += self.pmu_socket.recv(self.buffer_size)
 
         bytes_received = len(received_data)
-        total_frame_size = int.from_bytes(received_data[2:4], byteorder='big', signed=False)
+        total_frame_size = int.from_bytes(received_data[2:4], byteorder="big", signed=False)
 
         # Keep receiving until every byte of that message is received
         while bytes_received < total_frame_size:

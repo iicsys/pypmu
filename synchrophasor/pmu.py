@@ -20,15 +20,15 @@ __version__ = "0.1.3"
 class Pmu(object):
 
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     handler = logging.StreamHandler(stdout)
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
 
-    def __init__(self, pmu_id=7734, data_rate=30, port=4712, ip='127.0.0.1',
-                 method='tcp', buffer_size=2048, set_timestamp=True):
+    def __init__(self, pmu_id=7734, data_rate=30, port=4712, ip="127.0.0.1",
+                 method="tcp", buffer_size=2048, set_timestamp=True):
 
         self.port = port
         self.ip = ip
@@ -47,21 +47,21 @@ class Pmu(object):
                                               "BREAKER A STATUS", "BREAKER B STATUS", "BREAKER C STATUS",
                                               "BREAKER D STATUS", "BREAKER E STATUS", "BREAKER F STATUS",
                                               "BREAKER G STATUS"],
-                                             [(915527, 'v'), (915527, 'v'), (915527, 'v'), (45776, 'i')],
-                                             [(1, 'pow'), (1, 'rms'), (1, 'peak')], [(0x0000, 0xffff)],
+                                             [(915527, "v"), (915527, "v"), (915527, "v"), (45776, "i")],
+                                             [(1, "pow"), (1, "rms"), (1, "peak")], [(0x0000, 0xffff)],
                                              60, 22, data_rate)
 
-        self.ieee_data_sample = DataFrame(pmu_id, ('ok', True, 'timestamp', False, False, False, 0, '<10', 0),
+        self.ieee_data_sample = DataFrame(pmu_id, ("ok", True, "timestamp", False, False, False, 0, "<10", 0),
                                           [(14635, 0), (-7318, -12676), (-7318, 12675), (1092, 0)], 2500, 0,
                                           [100, 1000, 10000], [0x3c12], self.ieee_cfg2_sample)
 
-        self.ieee_command_sample = CommandFrame(pmu_id, 'start', None)
+        self.ieee_command_sample = CommandFrame(pmu_id, "start", None)
 
         self.cfg1 = self.ieee_cfg2_sample
         self.cfg1.__class__ = ConfigFrame1   # Casting CFG2 to CFG1
         self.cfg2 = self.ieee_cfg2_sample
         self.cfg3 = None
-        self.header = HeaderFrame(pmu_id, 'Hi! I am tinyPMU!')
+        self.header = HeaderFrame(pmu_id, "Hi! I am tinyPMU!")
 
         self.method = method
         self.clients = []
@@ -103,7 +103,7 @@ class Pmu(object):
             self.cfg3 = ConfigFrame3
 
         else:
-            raise PmuError('Incorrect configuration!')
+            raise PmuError("Incorrect configuration!")
 
         self.logger.info("[%d] - PMU configuration changed.", self.cfg2.get_id_code())
 
@@ -115,7 +115,7 @@ class Pmu(object):
         elif isinstance(header, str):
             self.header = HeaderFrame(self.cfg2.get_id_code(), header)
         else:
-            PmuError('Incorrect header setup! Only HeaderFrame and string allowed.')
+            PmuError("Incorrect header setup! Only HeaderFrame and string allowed.")
 
         # Notify all connected PDCs about new header
         self.send(self.header)
@@ -153,19 +153,19 @@ class Pmu(object):
     def send(self, frame):
 
         if not isinstance(frame, CommonFrame) and not isinstance(frame, bytes):
-            raise PmuError('Invalid frame type. send() method accepts only frames or raw bytes.')
+            raise PmuError("Invalid frame type. send() method accepts only frames or raw bytes.")
 
         for buffer in self.client_buffers:
             buffer.put(frame)
 
 
     def send_data(self, phasors=[], analog=[], digital=[], freq=0, dfreq=0,
-                  stat=('ok', True, 'timestamp', False, False, False, 0, '<10', 0), soc=None, frasec=None):
+                  stat=("ok", True, "timestamp", False, False, False, 0, "<10", 0), soc=None, frasec=None):
 
         # PH_UNIT conversion
         if phasors and self.cfg2.get_num_pmu() > 1:  # Check if multistreaming:
             if not (self.cfg2.get_num_pmu() == len(self.cfg2.get_data_format()) == len(phasors)):
-                raise PmuError('Incorrect input. Please provide PHASORS as list of lists with NUM_PMU elements.')
+                raise PmuError("Incorrect input. Please provide PHASORS as list of lists with NUM_PMU elements.")
 
             for i, df in self.cfg2.get_data_format():
                 if not df[1]:  # Check if phasor representation is integer
@@ -176,7 +176,7 @@ class Pmu(object):
         # AN_UNIT conversion
         if analog and self.cfg2.get_num_pmu() > 1:  # Check if multistreaming:
             if not (self.cfg2.get_num_pmu() == len(self.cfg2.get_data_format()) == len(analog)):
-                raise PmuError('Incorrect input. Please provide analog ANALOG as list of lists with NUM_PMU elements.')
+                raise PmuError("Incorrect input. Please provide analog ANALOG as list of lists with NUM_PMU elements.")
 
             for i, df in self.cfg2.get_data_format():
                 if not df[2]:  # Check if analog representation is integer
@@ -193,7 +193,7 @@ class Pmu(object):
     def run(self):
 
         if not self.cfg1 and not self.cfg2 and not self.cfg3:
-            raise PmuError('Cannot run PMU without configuration.')
+            raise PmuError("Cannot run PMU without configuration.")
 
         # Create TCP socket, bind port and listen for incoming connections
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -245,7 +245,7 @@ class Pmu(object):
         logger = logging.getLogger(address[0]+str(address[1]))
         logger.setLevel(log_level)
         handler = logging.StreamHandler(stdout)
-        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 
@@ -277,7 +277,7 @@ class Pmu(object):
                         received_data += connection.recv(buffer_size)
 
                     bytes_received = len(received_data)
-                    total_frame_size = int.from_bytes(received_data[2:4], byteorder='big', signed=False)
+                    total_frame_size = int.from_bytes(received_data[2:4], byteorder="big", signed=False)
 
                     # Keep receiving until every byte of that message is received
                     while bytes_received < total_frame_size:
@@ -305,33 +305,33 @@ class Pmu(object):
                         logger.warning("[%d] - Message not received completely <- (%s:%d)", pmu_id, address[0], address[1])
 
                 if command:
-                    if command == 'start':
+                    if command == "start":
                         sending_measurements_enabled = True
                         logger.info("[%d] - Start sending -> (%s:%d)", pmu_id, address[0], address[1])
 
-                    elif command == 'stop':
+                    elif command == "stop":
                         logger.info("[%d] - Stop sending -> (%s:%d)", pmu_id, address[0], address[1])
                         sending_measurements_enabled = False
 
-                    elif command == 'header':
+                    elif command == "header":
                         if set_timestamp: header.set_time()
                         connection.sendall(header.convert2bytes())
                         logger.info("[%d] - Requested Header frame sent -> (%s:%d)",
                                     pmu_id, address[0], address[1])
 
-                    elif command == 'cfg1':
+                    elif command == "cfg1":
                         if set_timestamp: cfg1.set_time()
                         connection.sendall(cfg1.convert2bytes())
                         logger.info("[%d] - Requested Configuration frame 1 sent -> (%s:%d)",
                                     pmu_id, address[0], address[1])
 
-                    elif command == 'cfg2':
+                    elif command == "cfg2":
                         if set_timestamp: cfg2.set_time()
                         connection.sendall(cfg2.convert2bytes())
                         logger.info("[%d] - Requested Configuration frame 2 sent -> (%s:%d)",
                                     pmu_id, address[0], address[1])
 
-                    elif command == 'cfg3':
+                    elif command == "cfg3":
                         if set_timestamp: cfg3.set_time()
                         connection.sendall(cfg3.convert2bytes())
                         logger.info("[%d] - Requested Configuration frame 3 sent -> (%s:%d)",

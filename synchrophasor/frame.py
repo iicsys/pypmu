@@ -1549,7 +1549,7 @@ class ConfigFrame1(CommonFrame):
                     str.encode(''.join(self._channel_names)) + list2bytes(self._ph_units, 4) + \
                     list2bytes(self._an_units, 4) + list2bytes(self._dig_units, 4) + \
                     self._f_nom.to_bytes(2, 'big') + self._cfg_count.to_bytes(2, 'big') + \
-                    self._data_rate.to_bytes(2, 'big')
+                    self._data_rate.to_bytes(2, 'big', signed=True)
         else:
 
             cfg_b = self._time_base.to_bytes(4, 'big') + self._num_pmu.to_bytes(2, 'big')
@@ -1565,7 +1565,7 @@ class ConfigFrame1(CommonFrame):
 
                 cfg_b += cfg_b_i
 
-            cfg_b += self._data_rate.to_bytes(2, 'big')
+            cfg_b += self._data_rate.to_bytes(2, 'big', signed=True)
 
         return super().convert2bytes(cfg_b)
 

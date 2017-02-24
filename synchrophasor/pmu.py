@@ -132,7 +132,7 @@ class Pmu(object):
         self.send(self.cfg2)
         # self.send(self.cfg3)
 
-        self.logger.info("[%d] - PMU reporting data rate changed.", self.cfg2.get_data_rate())
+        self.logger.info("[%d] - PMU reporting data rate changed.", self.cfg2.get_id_code())
 
 
     def set_data_format(self, data_format):
@@ -251,7 +251,7 @@ class Pmu(object):
     def pdc_handler(connection, address, buffer, pmu_id, data_rate, cfg1, cfg2, cfg3, header, buffer_size, log_level):
 
         # Recreate Logger (handler implemented as static method due to Windows process spawning issues)
-        logger = logging.getLogger(__name__)
+        logger = logging.getLogger(address[0]+str(address[1]))
         logger.setLevel(log_level)
         handler = logging.StreamHandler(stdout)
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
@@ -267,7 +267,7 @@ class Pmu(object):
         if data_rate > 0:
             delay = 1.0 / data_rate
         else:
-            delay = data_rate
+            delay = -data_rate
 
         try:
             while True:

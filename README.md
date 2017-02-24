@@ -208,13 +208,15 @@ Since `synchrophasor` module is in early development phase we're
 missing few very important things.
 
 * ~~We're working on Windows fix to support multiprocessing.~~
-* We don't have Configuration Frame ~~version 1 and~~ version 3 implemented
-but Configuration Frame version 2 is working just fine.
+* ~~We don't have Configuration Frame version 1 and version 3 implemented
+but Configuration Frame version 2 is working just fine.~~
 * ~~We don't have `convert2frame()` methods for converting raw bytes
 into `DataFrame` or `ConfigFrame`. We do have it for `CommandFrame` and
 `HeaderFrame`.~~
 * We don't have UDP connection supported yet but TCP looks like it's
-working as it should
+working as it should.
+* We don't have Configuration Frame 3 implemented.
+* We don't have out-of-the-box data stream aggregation for PDC.
 
 If you feel like you could help us, with testing or developing please
 do not hesitate to contact us: <stevan.sandi@gmail.com> or

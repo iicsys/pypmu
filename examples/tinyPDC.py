@@ -7,22 +7,25 @@ for header message, configuration and eventually
 to start sending measurements.
 """
 
-pdc = Pdc(pdc_id=7, pmu_ip='127.0.0.1', pmu_port=1410)
 
-pdc.run()  # Connect to PMU
+if __name__ == '__main__':
 
-header = pdc.get_header()  # Get header message from PMU
-config = pdc.get_config()  # Get configuration from PMU
+    pdc = Pdc(pdc_id=7, pmu_ip='127.0.0.1', pmu_port=1410)
 
-pdc.start()  # Request to start sending measurements
+    pdc.run()  # Connect to PMU
 
-while True:
+    header = pdc.get_header()  # Get header message from PMU
+    config = pdc.get_config()  # Get configuration from PMU
 
-    data = pdc.get()  # Keep receiving data
+    pdc.start()  # Request to start sending measurements
 
-    if type(data) == DataFrame:
-        print(data.get_measurements())
+    while True:
 
-    if not data:
-        pdc.quit()  # Close connection
-        break
+        data = pdc.get()  # Keep receiving data
+
+        if type(data) == DataFrame:
+            print(data.get_measurements())
+
+        if not data:
+            pdc.quit()  # Close connection
+            break

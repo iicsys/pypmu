@@ -8,6 +8,7 @@ measurements - fixed (sample) measurement will
 be sent.
 """
 
+
 if __name__ == '__main__':
 
     pmu = Pmu(ip="127.0.0.1", port=1410)

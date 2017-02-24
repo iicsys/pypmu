@@ -27,13 +27,15 @@ class Pmu(object):
     logger.addHandler(handler)
 
 
-    def __init__(self, pmu_id=7734, data_rate=30, port=4712, ip='127.0.0.1', method='tcp', buffer_size=2048):
+    def __init__(self, pmu_id=7734, data_rate=30, port=4712, ip='127.0.0.1',
+                 method='tcp', buffer_size=2048, set_timestamp=True):
 
         self.port = port
         self.ip = ip
 
         self.socket = None
         self.listener = None
+        self.set_timestamp = set_timestamp
         self.buffer_size = buffer_size
 
         self.ieee_cfg2_sample = ConfigFrame2(pmu_id, 1000000, 1, "Station A", 7734, (False, False, True, False),
@@ -148,22 +150,13 @@ class Pmu(object):
         self.logger.info("[%d] - PMU data format changed.", self.cfg2.get_id_code())
 
 
-    def send(self, frame, set_timestamp=True):
+    def send(self, frame):
 
-        if isinstance(frame, CommonFrame):
-            if set_timestamp:
-                frame.set_time()
-
-            data = frame.convert2bytes()
-
-        elif isinstance(frame, bytes):
-            data = frame
-
-        else:
+        if not isinstance(frame, CommonFrame) and not isinstance(frame, bytes):
             raise PmuError('Invalid frame type. send() method accepts only frames or raw bytes.')
 
         for buffer in self.client_buffers:
-            buffer.put(data)
+            buffer.put(frame)
 
 
     def send_data(self, phasors=[], analog=[], digital=[], freq=0, dfreq=0,
@@ -193,11 +186,8 @@ class Pmu(object):
 
         data_frame = DataFrame(self.cfg2.get_id_code(), stat, phasors, freq, dfreq, analog, digital, self.cfg2)
 
-        if not soc and not frasec:
-            data_frame.set_time()
-
         for buffer in self.client_buffers:
-            buffer.put(data_frame.convert2bytes())
+            buffer.put(data_frame)
 
 
     def run(self):
@@ -232,7 +222,7 @@ class Pmu(object):
             process = Process(target=self.pdc_handler, args=(conn, address, buffer, self.cfg2.get_id_code(),
                                                              self.cfg2.get_data_rate(), self.cfg1, self.cfg2,
                                                              self.cfg3, self.header, self.buffer_size,
-                                                             self.logger.level  ))
+                                                             self.set_timestamp, self.logger.level))
             process.daemon = True
             process.start()
             self.clients.append(process)
@@ -248,7 +238,8 @@ class Pmu(object):
 
 
     @staticmethod
-    def pdc_handler(connection, address, buffer, pmu_id, data_rate, cfg1, cfg2, cfg3, header, buffer_size, log_level):
+    def pdc_handler(connection, address, buffer, pmu_id, data_rate, cfg1, cfg2, cfg3, header,
+                    buffer_size, set_timestamp, log_level):
 
         # Recreate Logger (handler implemented as static method due to Windows process spawning issues)
         logger = logging.getLogger(address[0]+str(address[1]))
@@ -323,28 +314,38 @@ class Pmu(object):
                         sending_measurements_enabled = False
 
                     elif command == 'header':
+                        if set_timestamp: header.set_time()
                         connection.sendall(header.convert2bytes())
                         logger.info("[%d] - Requested Header frame sent -> (%s:%d)",
                                     pmu_id, address[0], address[1])
 
                     elif command == 'cfg1':
+                        if set_timestamp: cfg1.set_time()
                         connection.sendall(cfg1.convert2bytes())
                         logger.info("[%d] - Requested Configuration frame 1 sent -> (%s:%d)",
                                     pmu_id, address[0], address[1])
 
                     elif command == 'cfg2':
+                        if set_timestamp: cfg2.set_time()
                         connection.sendall(cfg2.convert2bytes())
                         logger.info("[%d] - Requested Configuration frame 2 sent -> (%s:%d)",
                                     pmu_id, address[0], address[1])
 
                     elif command == 'cfg3':
+                        if set_timestamp: cfg3.set_time()
                         connection.sendall(cfg3.convert2bytes())
                         logger.info("[%d] - Requested Configuration frame 3 sent -> (%s:%d)",
                                     pmu_id, address[0], address[1])
 
                 if sending_measurements_enabled and not buffer.empty():
+
+                    data = buffer.get()
+                    if isinstance(data, CommonFrame):  # If not raw bytes convert to bytes
+                        if set_timestamp: data.set_time()
+                        data = data.convert2bytes()
+
                     sleep(delay)
-                    connection.sendall(buffer.get())
+                    connection.sendall(data)
                     logger.debug("[%d] - Message sent at [%f] -> (%s:%d)",
                                  pmu_id, time(), address[0], address[1])
 

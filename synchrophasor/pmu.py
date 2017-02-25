@@ -14,7 +14,7 @@ __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
 __license__ = "BSD-3"
-__version__ = "0.1.3"
+__version__ = "1.0.0-alpha"
 
 
 class Pmu(object):
@@ -264,7 +264,7 @@ class Pmu(object):
             while True:
 
                 command = None
-                received_data = b''
+                received_data = b""
                 readable, writable, exceptional = select([connection], [], [], 0)  # Check for client commands
 
                 if readable:

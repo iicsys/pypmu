@@ -94,20 +94,20 @@ __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
 __license__ = "BSD-3"
-__version__ = "0.1"
+__version__ = "1.0.0-alpha"
 
 
 def list2bytes(int_list, byte_size):
 
     if isinstance(int_list, int):
-        return int_list.to_bytes(byte_size, 'big')
+        return int_list.to_bytes(byte_size, "big")
 
     byte_list = None
     for int_el in int_list:
         if byte_list is None:
-            byte_list = int_el.to_bytes(byte_size, 'big')
+            byte_list = int_el.to_bytes(byte_size, "big")
         else:
-            byte_list += int_el.to_bytes(byte_size, 'big')
+            byte_list += int_el.to_bytes(byte_size, "big")
 
     # If list is empty return 0 bytes
     if not byte_list:

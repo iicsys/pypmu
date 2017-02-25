@@ -1,0 +1,71 @@
+pyPMU - Python Synchrophasor Module
+===================================
+
+Synchrophasor module represents implementation of IEEE C37.118.2
+standard in Python. `synchrophasor` module is still in development phase
+but we have few very interesting tools.
+
+Getting Started
+---------------
+
+Synchrophasor module is made to be easy to install and run.
+
+### Prerequisites
+
+You will need `python3` to run module correctly. Check your Python
+version:
+
+### Installing
+
+-   Install using "pip" for Python 3: =pip3 install synchrophasor=
+
+-   You can download this project as "zip" file and extract it or clone
+    it using git "git clone https://github.com/iicsys/pypmu.git" and
+    then run "python3 setup.py install" inside project folder.
+
+### Running the tests
+
+Right now we have only one test for frame encapsulation validation. You
+can check it like this:
+
+    "python3 tests/validate_frames.py"
+
+
+Credits
+-------
+
+-   [Tomo Popovic](https://me.linkedin.com/in/tomopopovic) -
+    "synchrophasor" module project leader.
+-   [Bozo Krstajic](https://me.linkedin.com/in/bozo-krstajic-b503b51) -
+    "synchrophasor" module project adviser.
+-   [Stevan Sandi](https://me.linkedin.com/in/sstevan) - "synchrophasor"
+    module project developer.
+
+License
+-------
+
+   BSD-3-Clause
+
+
+References
+----------
+
+-   C37.118.2-2011 - IEEE Standard for Synchrophasor Data Transfer for
+    Power Systems - (http://standards.ieee.org/findstds/standard/C37.118.2-2011.html)
+
+Citations
+---------
+
+*If you use the pyPMU code for your research, please cite the following
+publication:*
+
+-   S. Sandi, T. Popovic, "pyPMU – Open Source Python Package for
+    Synchrophasor Data Transfer", IEEE 24th Telecommunications Forum
+    (TELFOR), Belgrade, Serbia, Nov 22-23
+
+-   S. Sandi, T. Popovic, B. Krstajic, "Python Implementation of IEEE
+    C37.118 Communication Protocol", Journal of Electrical Engineering,
+    Faculty of Electrical Engineering, University, Podgorica,
+    Montenegro, Vol. 21, No. 1, December 2015, pp 108-117
+
+

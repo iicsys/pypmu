@@ -4,7 +4,10 @@ Synchrophasor module represents implementation of IEEE C37.118.2
 standard in Python. `synchrophasor` module is still in development phase
 but we have few very interesting tools.
 
-#### Note: Latest Alpha release v0.3
+### Notes: 
+
+##### - Latest Alpha release: v1.0.0-alpha
+##### - We need some beta testers!
 
 ## Getting Started ##
 
@@ -22,78 +25,16 @@ Python 2.
 
 ### Installing ###
 
-* Clone this repository 
-`git clone https://github.com/sstevan/synchrophasor.git` or
-* Download this repository as `.zip` file and extract or
-* ~~Install using `pip`~~ or
-* Use [PyCharm](https://www.jetbrains.com/pycharm/) to clone this repo.
+* Install using `pip` for Python 3: `pip3 install synchrophasor`
 
-
-Add `synchrophasor` folder to `PYTHONPATH`:
-
-
-* If you're using GNU/Linux or Mac OS X add `synchrophasor` folder 
-(located inside repo folder) to your `$PYTHONPATH` like this: 
-     
-    For Ubuntu preferred option<sup>1</sup>:
-    
-    `
-    echo export PYTHONPATH="${PYTHONPATH}:/path/to/to/pypmu" >> ~/.profile && 
-    source ~/.profile
-    `
-    
-    For Mac OS X preferred option<sup>2</sup>:  
-      
-    `
-    echo export PYTHONPATH="${PYTHONPATH}:/path/to/pypmu" >> ~/.bash_profile && 
-    source ~/.bash_profile
-    `
-    
-    Or you can add it each time you run per-interactive-shell<sup>3</sup>:
-    
-    `
-    echo export PYTHONPATH="${PYTHONPATH}:/path/to/pypmu" >> ~/.bashrc 
-    && source ~/.bashrc
-    `
-    
-* If you're using Windows switch to GNU/Linux and check previous
-solution or
-* Add module folder following this [tutorial](https://docs.python.org/2/using/windows.html#excursus-setting-environment-variables) or
-* ~~If you've installed it using `pip` it's already there or~~
-* If you've cloned repository using PyCharm - PyCharm will handle it 
-for you.
-
-
-**Note**
-
-- <sup>1</sup>(./profile) 
-
-    `
-    ~/.profile: executed by the command interpreter for login shells.
-    This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login exists.
-    `
-    
-- <sup>2</sup>(./bash_profile)
-
-    `
-    ~/.bash_profile: The personal initialization file, executed for login shells
-    `
-    
--  <sup>3</sup>(~/.bashrc)
-
-    `
-    ~/.bashrc: The individual per-interactive-shell startup file
-    `
+* You can download this project as `zip` file and extract it or clone it
+using git `git clone https://github.com/iicsys/pypmu.git` and then run 
+`python3 setup.py install` inside project folder.
 
 ### Running the tests ###
 
 Right now we have only one test for frame encapsulation validation. You
 can check it like this:
-```
-python tests/validate_frames.py
-```
-If you have Python 3 installed alongside with Python 2 you should try
-like this:
 ```
 python3 tests/validate_frames.py
 ```
@@ -115,7 +56,7 @@ destinations following 4 lines of code will do it:
 ```
 from synchrophasor.splitter import StreamSplitter
 
-sp = StreamSplitter(source_ip='127.0.0.1', source_port=1410, listen_ip='127.0.0.1', listen_port=1502)
+sp = StreamSplitter(source_ip="127.0.0.1", source_port=1410, listen_ip="127.0.0.1", listen_port=1502)
 sp.run()
 ```
 
@@ -154,7 +95,7 @@ Data Frames and Configuration Frames
 ```
 from synchrophasor.pdc import Pdc
 
-pdc = Pdc(pdc_id=7, pmu_ip='127.0.0.1', pmu_port=1410)
+pdc = Pdc(pdc_id=7, pmu_ip="127.0.0.1", pmu_port=1410)
 
 pdc.run()  # Connect to PMU
 
@@ -207,12 +148,6 @@ connected PDCs:
 Since `synchrophasor` module is in early development phase we're
 missing few very important things.
 
-* ~~We're working on Windows fix to support multiprocessing.~~
-* ~~We don't have Configuration Frame version 1 and version 3 implemented
-but Configuration Frame version 2 is working just fine.~~
-* ~~We don't have `convert2frame()` methods for converting raw bytes
-into `DataFrame` or `ConfigFrame`. We do have it for `CommandFrame` and
-`HeaderFrame`.~~
 * We don't have UDP connection supported yet but TCP looks like it's
 working as it should.
 * We don't have Configuration Frame 3 implemented.
@@ -246,6 +181,7 @@ Please check [LICENSE.txt](LICENSE.txt).
 * C37.118.2-2011 - IEEE Standard for Synchrophasor Data Transfer for Power Systems,  [>>](http://standards.ieee.org/findstds/standard/C37.118.2-2011.html)
  
 ## Citations ##
+
 _If you use the pyPMU code for your research, please cite the following publication:_
 
 * S. Sandi, T. Popovic, "pyPMU – Open Source Python Package for Synchrophasor Data Transfer", IEEE 24th Telecommunications Forum (TELFOR), Belgrade, Serbia, Nov 22-23

@@ -10,7 +10,7 @@ __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
 __license__ = "BSD-3"
-__version__ = "0.2"
+__version__ = "1.0.0-alpha"
 
 
 cfg_hex_string = "aa3101c61e36448527f056071098000f4240000153746174696f6e2041202020202020201e360004000400030001564120" \
@@ -121,7 +121,7 @@ assert data_multi_hex_string == data_multi_hex_result, "Data Frame Multistreamin
 
 hf_hex_string = "aa1100271e36448560300f0bbfd048656c6c6f2049276d20486561646572204672616d652e17cc"
 
-hf = HeaderFrame(7734, "Hello I'm Header Frame.", 1149591600, (770000, '+', False, False, 15))
+hf = HeaderFrame(7734, "Hello I'm Header Frame.", 1149591600, (770000, "+", False, False, 15))
 # hf.set_soc(1149591600)
 # hf.set_frasec(770000, time_quality=15)
 

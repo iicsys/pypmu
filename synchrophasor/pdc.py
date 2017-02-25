@@ -8,7 +8,7 @@ __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
 __credits__ = []
 __license__ = "BSD-3"
-__version__ = "0.1.2"
+__version__ = "1.0.0-alpha"
 
 
 class Pdc(object):
@@ -116,7 +116,7 @@ class Pdc(object):
         :return: CommonFrame
         """
 
-        received_data = b''
+        received_data = b""
         received_message = None
 
         """

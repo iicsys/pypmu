@@ -7,7 +7,7 @@ This to-do list will help us to set priorities and define future work.
 * ~~Implement `recv_all` if command is to long for buffer.~~
 * ~~Implement `convert2frame()` methods for DataFrame and ConfigFrame.~~
 * ~~Implement PDC methods - *getters*.~~
-* Upload to `pip`.
+* ~~Upload to `pip`.~~
 * ~~Well, well, we might implement StreamSplitter with `Pdc()` and `Pmu()`?~~
 * ~~Calculate SOC if not defined in `__init()__` function.~~
 * ~~Check phasor values list length using data format (`PHASOR_NUM`).~~

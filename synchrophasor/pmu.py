@@ -37,6 +37,7 @@ class Pmu(object):
         self.listener = None
         self.set_timestamp = set_timestamp
         self.buffer_size = buffer_size
+        self.delay = (1.0 / data_rate) if data_rate > 0 else -data_rate
 
         self.ieee_cfg2_sample = ConfigFrame2(pmu_id, 1000000, 1, "Station A", 7734, (False, False, True, False),
                                              4, 3, 1,
@@ -133,6 +134,7 @@ class Pmu(object):
         # Configuration changed - Notify all PDCs about new configuration
         self.send(self.cfg2)
         # self.send(self.cfg3)
+        self.delay = (1.0 / data_rate) if data_rate > 0 else -data_rate
 
         self.logger.info("[%d] - PMU reporting data rate changed.", self.cfg2.get_id_code())
 
@@ -162,33 +164,36 @@ class Pmu(object):
     def send_data(self, phasors=[], analog=[], digital=[], freq=0, dfreq=0,
                   stat=("ok", True, "timestamp", False, False, False, 0, "<10", 0), soc=None, frasec=None):
 
-        # PH_UNIT conversion
-        if phasors and self.cfg2.get_num_pmu() > 1:  # Check if multistreaming:
-            if not (self.cfg2.get_num_pmu() == len(self.cfg2.get_data_format()) == len(phasors)):
-                raise PmuError("Incorrect input. Please provide PHASORS as list of lists with NUM_PMU elements.")
+        if self.clients:
+            # PH_UNIT conversion
+            if phasors and self.cfg2.get_num_pmu() > 1:  # Check if multistreaming:
+                if not (self.cfg2.get_num_pmu() == len(self.cfg2.get_data_format()) == len(phasors)):
+                    raise PmuError("Incorrect input. Please provide PHASORS as list of lists with NUM_PMU elements.")
 
-            for i, df in self.cfg2.get_data_format():
-                if not df[1]:  # Check if phasor representation is integer
-                    phasors[i] = map(lambda x: int(x / (0.00001 * self.cfg2.get_ph_units()[i])), phasors[i])
-        elif not self.cfg2.get_data_format()[1]:
-            phasors = map(lambda x: int(x / (0.00001 * self.cfg2.get_ph_units())), phasors)
+                for i, df in self.cfg2.get_data_format():
+                    if not df[1]:  # Check if phasor representation is integer
+                        phasors[i] = map(lambda x: int(x / (0.00001 * self.cfg2.get_ph_units()[i])), phasors[i])
+            elif not self.cfg2.get_data_format()[1]:
+                phasors = map(lambda x: int(x / (0.00001 * self.cfg2.get_ph_units())), phasors)
 
-        # AN_UNIT conversion
-        if analog and self.cfg2.get_num_pmu() > 1:  # Check if multistreaming:
-            if not (self.cfg2.get_num_pmu() == len(self.cfg2.get_data_format()) == len(analog)):
-                raise PmuError("Incorrect input. Please provide analog ANALOG as list of lists with NUM_PMU elements.")
+            # AN_UNIT conversion
+            if analog and self.cfg2.get_num_pmu() > 1:  # Check if multistreaming:
+                if not (self.cfg2.get_num_pmu() == len(self.cfg2.get_data_format()) == len(analog)):
+                    raise PmuError("Incorrect input. Please provide analog ANALOG as list of lists with NUM_PMU elements.")
 
-            for i, df in self.cfg2.get_data_format():
-                if not df[2]:  # Check if analog representation is integer
-                    analog[i] = map(lambda x: int(x / self.cfg2.get_analog_units()[i]), analog[i])
-        elif not self.cfg2.get_data_format()[2]:
-            analog = map(lambda x: int(x / self.cfg2.get_analog_units()), analog)
+                for i, df in self.cfg2.get_data_format():
+                    if not df[2]:  # Check if analog representation is integer
+                        analog[i] = map(lambda x: int(x / self.cfg2.get_analog_units()[i]), analog[i])
+            elif not self.cfg2.get_data_format()[2]:
+                analog = map(lambda x: int(x / self.cfg2.get_analog_units()), analog)
 
-        data_frame = DataFrame(self.cfg2.get_id_code(), stat, phasors, freq, dfreq, analog, digital, self.cfg2)
+            data_frame = DataFrame(self.cfg2.get_id_code(), stat, phasors, freq, dfreq, analog, digital, self.cfg2)
 
-        for buffer in self.client_buffers:
-            buffer.put(data_frame)
-
+            for buffer in self.client_buffers:
+                buffer.put(data_frame)
+            sleep(self.delay)
+        else:
+            sleep(1) # Reduces CPU usage when there are no active connections
 
     def run(self):
 

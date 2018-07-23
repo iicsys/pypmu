@@ -44,11 +44,10 @@ if __name__ == "__main__":
     pmu.run()
 
     while True:
-        if pmu.clients:
-            pmu.send_data(phasors=[(random.uniform(215.0, 240.0), random.uniform(-0.1, 0.3)),
-                                   (random.uniform(215.0, 240.0), random.uniform(1.9, 2.2)),
-                                   (random.uniform(215.0, 240.0), random.uniform(3.0, 3.14))],
-                          analog=[9.91],
-                          digital=[0x0001])
+        pmu.send_data(phasors=[(random.uniform(215.0, 240.0), random.uniform(-0.1, 0.3)),
+                                (random.uniform(215.0, 240.0), random.uniform(1.9, 2.2)),
+                                (random.uniform(215.0, 240.0), random.uniform(3.0, 3.14))],
+                        analog=[9.91],
+                        digital=[0x0001])
 
     pmu.join()

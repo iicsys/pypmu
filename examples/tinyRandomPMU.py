@@ -46,7 +46,7 @@ if __name__ == "__main__":
     pmu.run()
 
     import time
-    samples=240
+    samples=120
     PERIOD=1/samples
     firstIter=True
 

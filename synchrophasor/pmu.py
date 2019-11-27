@@ -5,10 +5,10 @@ from select import select
 from threading import Thread
 from multiprocessing import Queue
 from multiprocessing import Process
-from sys import stdout
+from sys import stdout,exc_info
 from time import sleep
 from synchrophasor.frame import *
-
+from traceback import print_exception
 
 __author__ = "Stevan Sandi"
 __copyright__ = "Copyright (c) 2016, Tomo Popovic, Stevan Sandi, Bozo Krstajic"
@@ -379,37 +379,35 @@ class Pmu(object):
 
                         #sleep(delay)
                         connection.sendall(data)
-                        logger.debug("[%d] - Message sent at [%f] -> (%s:%d)",
-                                     pmu_id, time(), address[0], address[1])
+                        logger.debug("[%d] - Message sent at [%f] -> (%s:%d)",pmu_id, time(), address[0], address[1])
                 else:
-                    import datetime
                     if command:
                         if command == "start":
                             sending_measurements_enabled = True
-                            print(("%s INFO [%d] - Start sending -> (%s:%d)")% (datetime.datetime.now(),pmu_id, address[0], address[1]))
+                            logger.debug("[%d] - Start sending -> (%s:%d)", (pmu_id, address[0], address[1]))
 
                         elif command == "stop":
-                            print(("%s INFO [%d] - Stop sending -> (%s:%d)")%( datetime.datetime.now(),pmu_id, address[0], address[1]))
+                            logger.debug("%s INFO [%d] - Stop sending -> (%s:%d)",(pmu_id, address[0], address[1]))
                             sending_measurements_enabled = False
 
                         elif command == "header":
                             if set_timestamp: header.set_time()
                             connection.sendto(header.convert2bytes(),address)
-                            print("%s INFO [%d] - Requested Header frame sent -> (%s:%d)"%(datetime.datetime.now(),pmu_id, address[0], address[1]))
+                            logger.debug("[%d] - Requested Header frame sent -> (%s:%d)",(pmu_id, address[0], address[1]))
 
                         elif command == "cfg1":
                             if set_timestamp: cfg1.set_time()
                             connection.sendto(cfg1.convert2bytes(),address)
-                            print("%s INFO [%d] - Requested Configuration frame 1 sent -> (%s:%d)"%(datetime.datetime.now(),pmu_id, address[0], address[1]))
+                            logger.debug("[%d] - Requested Configuration frame 1 sent -> (%s:%d)",(pmu_id, address[0], address[1]))
 
                         elif command == "cfg2":
                             connection.sendto(cfg2.convert2bytes(),address)
-                            print(("%s INFO [%d] - Requested Configuration frame 2 sent -> (%s:%d)")%(datetime.datetime.now(),pmu_id, address[0], address[1]))
+                            logger.debug("[%d] - Requested Configuration frame 2 sent -> (%s:%d)",(pmu_id, address[0], address[1]))
 
                         elif command == "cfg3":
                             if set_timestamp: cfg3.set_time()
                             connection.sendto(cfg3.convert2bytes(),address)
-                            print("%s [%d] - Requested Configuration frame 3 sent -> (%s:%d)"%(datetime.datetime.now(),pmu_id, address[0], address[1]))
+                            logger.debug("[%d] - Requested Configuration frame 3 sent -> (%s:%d)",(pmu_id, address[0], address[1]))
 
                     if sending_measurements_enabled:#and not buffer.empty():
 
@@ -423,10 +421,12 @@ class Pmu(object):
 
         except Exception as e:
             print(e)
+            exc_information=exec_info()
         finally:
             connection.close()
             logger.debug("[%d] - Connection from %s:%d has been closed.", pmu_id, address[0], address[1])
-
+            print(print_exception(*exc_information))
+            del exc_information
 
 class PmuError(BaseException):
     pass

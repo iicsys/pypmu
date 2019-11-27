@@ -265,15 +265,15 @@ class Pmu(object):
                     buffer_size, set_timestamp, log_level,method):
         import time
         # Recreate Logger (handler implemented as static method due to Windows process spawning issues)
-       
-        #    logger = logging.getLogger(address[0]+str(address[1]))
-        #    logger.setLevel(log_level)
-        #    handler = logging.StreamHandler(stdout)
-        #    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
-        #    handler.setFormatter(formatter)
-        #    logger.addHandler(handler)  
+        if method=="tcp"
+            logger = logging.getLogger(address[0]+str(address[1]))
+            logger.setLevel(log_level)
+            handler = logging.StreamHandler(stdout)
+            formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)  
 
-        #logger.info("[%d] - Connection from %s:%d", pmu_id, address[0], address[1])
+            logger.info("[%d] - Connection from %s:%d", pmu_id, address[0], address[1])
 
         # Wait for start command from connected PDC/PMU to start sending
         sending_measurements_enabled = False
@@ -340,34 +340,34 @@ class Pmu(object):
                     if command:
                         if command == "start":
                             sending_measurements_enabled = True
-                            print(("[%d] - Start sending -> (%s:%d)"), pmu_id, address[0], address[1])
+                            logger(("[%d] - Start sending -> (%s:%d)"), pmu_id, address[0], address[1])
 
                         elif command == "stop":
-                            print("[%d] - Stop sending -> (%s:%d)", pmu_id, address[0], address[1])
+                            logger("[%d] - Stop sending -> (%s:%d)", pmu_id, address[0], address[1])
                             sending_measurements_enabled = False
 
                         elif command == "header":
                             if set_timestamp: header.set_time()
                             connection.sendall(header.convert2bytes())
-                            print("[%d] - Requested Header frame sent -> (%s:%d)",
+                            logger("[%d] - Requested Header frame sent -> (%s:%d)",
                                         pmu_id, address[0], address[1])
 
                         elif command == "cfg1":
                             if set_timestamp: cfg1.set_time()
                             connection.sendall(cfg1.convert2bytes())
-                            print("[%d] - Requested Configuration frame 1 sent -> (%s:%d)",
+                            logger("[%d] - Requested Configuration frame 1 sent -> (%s:%d)",
                                         pmu_id, address[0], address[1])
 
                         elif command == "cfg2":
                             if set_timestamp: cfg2.set_time()
                             connection.sendall(cfg2.convert2bytes())
-                            print("[%d] - Requested Configuration frame 2 sent -> (%s:%d)",
+                            logger("[%d] - Requested Configuration frame 2 sent -> (%s:%d)",
                                         pmu_id, address[0], address[1])
 
                         elif command == "cfg3":
                             if set_timestamp: cfg3.set_time()
                             connection.sendall(cfg3.convert2bytes())
-                            print("[%d] - Requested Configuration frame 3 sent -> (%s:%d)",
+                            logger("[%d] - Requested Configuration frame 3 sent -> (%s:%d)",
                                         pmu_id, address[0], address[1])
 
                     if sending_measurements_enabled and not buffer.empty():

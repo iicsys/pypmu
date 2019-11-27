@@ -421,7 +421,7 @@ class Pmu(object):
 
         except Exception as e:
             print(e)
-            exc_information=exec_info()
+            exc_information=exc_info()
         finally:
             connection.close()
             logger.debug("[%d] - Connection from %s:%d has been closed.", pmu_id, address[0], address[1])

@@ -225,7 +225,7 @@ class Pmu(object):
                 process = Process(target=self.pdc_handler, args=(conn, address, buffer, self.cfg2.get_id_code(),
                                                                  self.cfg2.get_data_rate(), self.cfg1, self.cfg2,
                                                                  self.cfg3, self.header, self.buffer_size,
-                                                                 self.set_timestamp, self.logger.level,self.method),daemon=True,name="acceptorPMUprocess")
+                                                                 self.set_timestamp, self.logger.level,self.method,self.logger),daemon=True,name="acceptorPMUprocess")
                 process.daemon = True
                 process.start()
                 self.clients.append(process)
@@ -244,7 +244,7 @@ class Pmu(object):
             process = Process(target=self.pdc_handler, args=(conn, address, buffer, self.cfg2.get_id_code(),
                                                              self.cfg2.get_data_rate(), self.cfg1, self.cfg2,
                                                              self.cfg3, self.header, self.buffer_size,
-                                                             self.set_timestamp, self.logger.level,self.method),daemon=True,name="acceptorPMUprocess")
+                                                             self.set_timestamp, self.logger.level,self.method,self.logger),daemon=True,name="acceptorPMUprocess")
             process.daemon = True
             process.start()
             self.clients.append(process)
@@ -261,7 +261,7 @@ class Pmu(object):
 
     @staticmethod
     def pdc_handler(connection, address, buffer, pmu_id, data_rate, cfg1, cfg2, cfg3, header,
-                    buffer_size, set_timestamp, log_level,method):
+                    buffer_size, set_timestamp, log_level,method,logger):
         import time
         # Recreate Logger (handler implemented as static method due to Windows process spawning issues)
         # if method=="tcp":
@@ -339,34 +339,34 @@ class Pmu(object):
                     if command:
                         if command == "start":
                             sending_measurements_enabled = True
-                            self.logger(("[%d] - Start sending -> (%s:%d)"), pmu_id, address[0], address[1])
+                            logger(("[%d] - Start sending -> (%s:%d)"), pmu_id, address[0], address[1])
 
                         elif command == "stop":
-                            self.logger("[%d] - Stop sending -> (%s:%d)", pmu_id, address[0], address[1])
+                            logger("[%d] - Stop sending -> (%s:%d)", pmu_id, address[0], address[1])
                             sending_measurements_enabled = False
 
                         elif command == "header":
                             if set_timestamp: header.set_time()
                             connection.sendall(header.convert2bytes())
-                            self.logger("[%d] - Requested Header frame sent -> (%s:%d)",
+                            logger("[%d] - Requested Header frame sent -> (%s:%d)",
                                         pmu_id, address[0], address[1])
 
                         elif command == "cfg1":
                             if set_timestamp: cfg1.set_time()
                             connection.sendall(cfg1.convert2bytes())
-                            self.logger("[%d] - Requested Configuration frame 1 sent -> (%s:%d)",
+                            logger("[%d] - Requested Configuration frame 1 sent -> (%s:%d)",
                                         pmu_id, address[0], address[1])
 
                         elif command == "cfg2":
                             if set_timestamp: cfg2.set_time()
                             connection.sendall(cfg2.convert2bytes())
-                            self.logger("[%d] - Requested Configuration frame 2 sent -> (%s:%d)",
+                            logger("[%d] - Requested Configuration frame 2 sent -> (%s:%d)",
                                         pmu_id, address[0], address[1])
 
                         elif command == "cfg3":
                             if set_timestamp: cfg3.set_time()
                             connection.sendall(cfg3.convert2bytes())
-                            self.logger("[%d] - Requested Configuration frame 3 sent -> (%s:%d)",
+                            logger("[%d] - Requested Configuration frame 3 sent -> (%s:%d)",
                                         pmu_id, address[0], address[1])
 
                     if sending_measurements_enabled and not buffer.empty():
@@ -379,7 +379,7 @@ class Pmu(object):
 
                         #sleep(delay)
                         connection.sendall(data)
-                        self.logger.debug("[%d] - Message sent at [%f] -> (%s:%d)",
+                        logger.debug("[%d] - Message sent at [%f] -> (%s:%d)",
                                      pmu_id, time(), address[0], address[1])
                 else:
                     import datetime

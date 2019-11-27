@@ -10,7 +10,7 @@ PMU described in IEEE C37.118.2 - Annex D.
 
 if __name__ == "__main__":
 
-    pmu = Pmu(ip="127.0.0.1", port=9991)
+    pmu = Pmu(ip="", port=10000)
     pmu.logger.setLevel("DEBUG")
 
     ph_v_conversion = int(300000.0 / 32768 * 100000)  # Voltage phasor conversion factor

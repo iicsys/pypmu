@@ -226,7 +226,7 @@ class Pmu(object):
                 process = Process(target=self.pdc_handler, args=(conn, address, buffer, self.cfg2.get_id_code(),
                                                                  self.cfg2.get_data_rate(), self.cfg1, self.cfg2,
                                                                  self.cfg3, self.header, self.buffer_size,
-                                                                 self.set_timestamp, self.logger.level),daemon=True,name="acceptorPMUprocess")
+                                                                 self.set_timestamp, self.logger.level,self.method),daemon=True,name="acceptorPMUprocess")
                 process.daemon = True
                 process.start()
                 self.clients.append(process)

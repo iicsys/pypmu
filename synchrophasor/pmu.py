@@ -262,7 +262,7 @@ class Pmu(object):
     @staticmethod
     def pdc_handler(connection, address, buffer, pmu_id, data_rate, cfg1, cfg2, cfg3, header,
                     buffer_size, set_timestamp, log_level,method,logger):
-        from import time
+        from time import time
         # Recreate Logger (handler implemented as static method due to Windows process spawning issues)
         # if method=="tcp":
         #     logger = logging.getLogger(address[0]+str(address[1]))

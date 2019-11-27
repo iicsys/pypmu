@@ -19,16 +19,15 @@ __version__ = "1.0.0-alpha"
 
 class Pmu(object):
 
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    handler = logging.StreamHandler(stdout)
-    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
 
 
     def __init__(self, pmu_id=7734, data_rate=30, port=4712, ip="127.0.0.1",method="tcp", buffer_size=2048, set_timestamp=True):
-        print(logger)
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        self.handler = logging.StreamHandler(stdout)
+        self.formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+        self.handler.setFormatter(self.formatter)
+        self.logger.addHandler(self.handler)
         self.port = port
         self.ip = ip
 
@@ -340,34 +339,34 @@ class Pmu(object):
                     if command:
                         if command == "start":
                             sending_measurements_enabled = True
-                            logger(("[%d] - Start sending -> (%s:%d)"), pmu_id, address[0], address[1])
+                            self.logger(("[%d] - Start sending -> (%s:%d)"), pmu_id, address[0], address[1])
 
                         elif command == "stop":
-                            logger("[%d] - Stop sending -> (%s:%d)", pmu_id, address[0], address[1])
+                            self.logger("[%d] - Stop sending -> (%s:%d)", pmu_id, address[0], address[1])
                             sending_measurements_enabled = False
 
                         elif command == "header":
                             if set_timestamp: header.set_time()
                             connection.sendall(header.convert2bytes())
-                            logger("[%d] - Requested Header frame sent -> (%s:%d)",
+                            self.logger("[%d] - Requested Header frame sent -> (%s:%d)",
                                         pmu_id, address[0], address[1])
 
                         elif command == "cfg1":
                             if set_timestamp: cfg1.set_time()
                             connection.sendall(cfg1.convert2bytes())
-                            logger("[%d] - Requested Configuration frame 1 sent -> (%s:%d)",
+                            self.logger("[%d] - Requested Configuration frame 1 sent -> (%s:%d)",
                                         pmu_id, address[0], address[1])
 
                         elif command == "cfg2":
                             if set_timestamp: cfg2.set_time()
                             connection.sendall(cfg2.convert2bytes())
-                            logger("[%d] - Requested Configuration frame 2 sent -> (%s:%d)",
+                            self.logger("[%d] - Requested Configuration frame 2 sent -> (%s:%d)",
                                         pmu_id, address[0], address[1])
 
                         elif command == "cfg3":
                             if set_timestamp: cfg3.set_time()
                             connection.sendall(cfg3.convert2bytes())
-                            logger("[%d] - Requested Configuration frame 3 sent -> (%s:%d)",
+                            self.logger("[%d] - Requested Configuration frame 3 sent -> (%s:%d)",
                                         pmu_id, address[0], address[1])
 
                     if sending_measurements_enabled and not buffer.empty():
@@ -380,7 +379,7 @@ class Pmu(object):
 
                         #sleep(delay)
                         connection.sendall(data)
-                        logger.debug("[%d] - Message sent at [%f] -> (%s:%d)",
+                        self.logger.debug("[%d] - Message sent at [%f] -> (%s:%d)",
                                      pmu_id, time(), address[0], address[1])
                 else:
                     import datetime
@@ -420,7 +419,7 @@ class Pmu(object):
 
                         #sleep(delay)
                         connection.sendto(data,address)
-                        #logger.debug("[%d] - Message sent at [%f] -> (%s:%d)"%(pmu_id, time(), address[0], address[1]))
+                        #self.logger.debug("[%d] - Message sent at [%f] -> (%s:%d)"%(pmu_id, time(), address[0], address[1]))
 
         except Exception as e:
             print(e)

@@ -383,30 +383,30 @@ class Pmu(object):
                     if command:
                         if command == "start":
                             sending_measurements_enabled = True
-                            logger.debug("[%d] - Start sending -> (%s:%d)", (pmu_id, address[0], address[1]))
+                            logger.debug("[%d] - Start sending -> (%s:%d)", pmu_id, address[0], address[1])
 
                         elif command == "stop":
-                            logger.debug("%s INFO [%d] - Stop sending -> (%s:%d)",(pmu_id, address[0], address[1]))
+                            logger.debug("%s INFO [%d] - Stop sending -> (%s:%d)",pmu_id, address[0], address[1])
                             sending_measurements_enabled = False
 
                         elif command == "header":
                             if set_timestamp: header.set_time()
                             connection.sendto(header.convert2bytes(),address)
-                            logger.debug("[%d] - Requested Header frame sent -> (%s:%d)",(pmu_id, address[0], address[1]))
+                            logger.debug("[%d] - Requested Header frame sent -> (%s:%d)",pmu_id, address[0], address[1])
 
                         elif command == "cfg1":
                             if set_timestamp: cfg1.set_time()
                             connection.sendto(cfg1.convert2bytes(),address)
-                            logger.debug("[%d] - Requested Configuration frame 1 sent -> (%s:%d)",(pmu_id, address[0], address[1]))
+                            logger.debug("[%d] - Requested Configuration frame 1 sent -> (%s:%d)",pmu_id, address[0], address[1])
 
                         elif command == "cfg2":
                             connection.sendto(cfg2.convert2bytes(),address)
-                            logger.debug("[%d] - Requested Configuration frame 2 sent -> (%s:%d)",(pmu_id, address[0], address[1]))
+                            logger.debug("[%d] - Requested Configuration frame 2 sent -> (%s:%d)",pmu_id, address[0], address[1])
 
                         elif command == "cfg3":
                             if set_timestamp: cfg3.set_time()
                             connection.sendto(cfg3.convert2bytes(),address)
-                            logger.debug("[%d] - Requested Configuration frame 3 sent -> (%s:%d)",(pmu_id, address[0], address[1]))
+                            logger.debug("[%d] - Requested Configuration frame 3 sent -> (%s:%d)",pmu_id, address[0], address[1])
 
                     if sending_measurements_enabled:#and not buffer.empty():
 

@@ -11,7 +11,7 @@ to start sending measurements.
 
 if __name__ == "__main__":
 
-    pdc = Pdc(pdc_id=7, pmu_ip=socket.gethostbyname("rasp"), pmu_port=10000)
+    pdc = Pdc(pdc_id=7, pmu_ip=socket.gethostbyname("rasp"), pmu_port=10000,method='udp')
     pdc.logger.setLevel("DEBUG")
 
     pdc.run()  # Connect to PMU

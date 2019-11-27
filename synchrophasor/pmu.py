@@ -265,7 +265,7 @@ class Pmu(object):
                     buffer_size, set_timestamp, log_level,method):
         import time
         # Recreate Logger (handler implemented as static method due to Windows process spawning issues)
-        if method=="tcp"
+        if method=="tcp":
             logger = logging.getLogger(address[0]+str(address[1]))
             logger.setLevel(log_level)
             handler = logging.StreamHandler(stdout)

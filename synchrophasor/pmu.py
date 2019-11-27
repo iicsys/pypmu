@@ -386,7 +386,7 @@ class Pmu(object):
                             logger.debug("[%d] - Start sending -> (%s:%d)", pmu_id, address[0], address[1])
 
                         elif command == "stop":
-                            logger.debug("%s INFO [%d] - Stop sending -> (%s:%d)",pmu_id, address[0], address[1])
+                            logger.debug("[%d] - Stop sending -> (%s:%d)",pmu_id, address[0], address[1])
                             sending_measurements_enabled = False
 
                         elif command == "header":

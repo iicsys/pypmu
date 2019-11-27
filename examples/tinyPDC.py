@@ -1,6 +1,6 @@
 from synchrophasor.pdc import Pdc
 from synchrophasor.frame import DataFrame
-from matplotlib.pyplot import plot,show
+import pickle
 import socket
 """
 tinyPDC will connect to pmu_ip:pmu_port and send request
@@ -21,15 +21,22 @@ if __name__ == "__main__":
 
     pdc.start()  # Request to start sending measurements
     timestamps=[]
-    for i in range(100):
+    i=0
+    while True:
 
         data = pdc.get()  # Keep receiving data
 
         if type(data) == DataFrame:
-            print(data.get_measurements())
-
+            data=data.get_measurements()
+            i+=1
+            timestamps.append(data['time'])
 
         if not data:
+            continue
+        if i==240:
             break
 
-
+    pdc.stop()
+    pdc.quit()
+    with open("timestamps","wb+")as handle:
+        pickle.dump(timestamps,handle)

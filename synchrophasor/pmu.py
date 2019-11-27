@@ -262,7 +262,7 @@ class Pmu(object):
     @staticmethod
     def pdc_handler(connection, address, buffer, pmu_id, data_rate, cfg1, cfg2, cfg3, header,
                     buffer_size, set_timestamp, log_level,method,logger):
-        import time
+        from import time
         # Recreate Logger (handler implemented as static method due to Windows process spawning issues)
         # if method=="tcp":
         #     logger = logging.getLogger(address[0]+str(address[1]))
@@ -276,7 +276,7 @@ class Pmu(object):
 
         # Wait for start command from connected PDC/PMU to start sending
         sending_measurements_enabled = False
-        currentTime=time.time()
+        currentTime=time()
         # Calculate delay between data frames
         if data_rate > 0:
             delay = 1.0 / data_rate
@@ -322,18 +322,13 @@ class Pmu(object):
 
                             if isinstance(received_message, CommandFrame):
                                 command = received_message.get_command()
-                                print("%s [%d] INFO - Received command: [%s] <- (%s:%d)"% (datetime.datetime.now(),pmu_id, command,address[0], address[1]))
+                                logger.debug("[%d] INFO - Received command: [%s] <- (%s:%d)"% (pmu_id, command,address[0], address[1]))
                             else:
-                                print("[%d] - Received [%s] <- (%s:%d)"%( pmu_id,type(received_message).__name__, address[0], address[1]))
+                                logger.debug("[%d] - Received [%s] <- (%s:%d)"%( pmu_id,type(received_message).__name__, address[0], address[1]))
                         except FrameError:
-                            print(("[%d] - Received unknown message <- (%s:%d)")%(pmu_id, address[0], address[1]))
+                            logger.debug(("[%d] - Received unknown message <- (%s:%d)")%(pmu_id, address[0], address[1]))
                     else:
-                        print(("[%d] - Message not received completely <- (%s:%d)")%(pmu_id, address[0], address[1]))
-                
-                if(time.time()-currentTime>=60):
-                    currentTime=time.time()
-                    connection.sendto(cfg2.convert2bytes(),address)
-                    #print(("[%d] - Requested Configuration frame 2 sent -> (%s:%d)")%(pmu_id, address[0], address[1]))
+                        logger.debug(("[%d] - Message not received completely <- (%s:%d)")%(pmu_id, address[0], address[1]))
 
                 if(method=="tcp"):
                     if command:
@@ -381,6 +376,10 @@ class Pmu(object):
                         connection.sendall(data)
                         logger.debug("[%d] - Message sent at [%f] -> (%s:%d)",pmu_id, time(), address[0], address[1])
                 else:
+                    if(time()-currentTime>=60):
+                        currentTime=time()
+                        connection.sendto(cfg2.convert2bytes(),address)
+                        # logger.debug(("[%d] - Requested Configuration frame 2 sent -> (%s:%d)")%(pmu_id, address[0], address[1]))
                     if command:
                         if command == "start":
                             sending_measurements_enabled = True

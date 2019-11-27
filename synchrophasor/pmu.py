@@ -28,7 +28,7 @@ class Pmu(object):
 
 
     def __init__(self, pmu_id=7734, data_rate=30, port=4712, ip="127.0.0.1",method="tcp", buffer_size=2048, set_timestamp=True):
-
+        print(logger)
         self.port = port
         self.ip = ip
 
@@ -265,15 +265,15 @@ class Pmu(object):
                     buffer_size, set_timestamp, log_level,method):
         import time
         # Recreate Logger (handler implemented as static method due to Windows process spawning issues)
-        if method=="tcp":
-            logger = logging.getLogger(address[0]+str(address[1]))
-            logger.setLevel(log_level)
-            handler = logging.StreamHandler(stdout)
-            formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)  
+        # if method=="tcp":
+        #     logger = logging.getLogger(address[0]+str(address[1]))
+        #     logger.setLevel(log_level)
+        #     handler = logging.StreamHandler(stdout)
+        #     formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+        #     handler.setFormatter(formatter)
+        #     logger.addHandler(handler)  
 
-            logger.info("[%d] - Connection from %s:%d", pmu_id, address[0], address[1])
+        #     logger.info("[%d] - Connection from %s:%d", pmu_id, address[0], address[1])
 
         # Wait for start command from connected PDC/PMU to start sending
         sending_measurements_enabled = False

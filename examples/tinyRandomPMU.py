@@ -78,6 +78,6 @@ if __name__ == "__main__":
                     print("missed {} appointments.".format(missed - 1))
 
                 time.sleep(delay)
-        print(missed) 
+            print(missed) 
 
     pmu.join()

@@ -48,36 +48,37 @@ if __name__ == "__main__":
     import time
     samples=240
     PERIOD=1/samples
+    firstIter=True
 
+    
 
     while True:
         if pmu.clients:
-            while (n:=time.time())%1!=0:
-                continue
-
-            next1 = n + PERIOD
-            for i in range(samples):
-
-                pmu.send_data(phasors=[(random.uniform(215.0, 240.0), random.uniform(-0.1, 0.3)),
+            if firstIter:
+                while (n:=time.time())%1!=0:
+                    continue
+                next1 = n + PERIOD
+                firstIter=False
+            
+            pmu.send_data(phasors=[(random.uniform(215.0, 240.0), random.uniform(-0.1, 0.3)),
                                    (random.uniform(215.0, 240.0), random.uniform(1.9, 2.2)),
                                    (random.uniform(215.0, 240.0), random.uniform(3.0, 3.14))],
                           analog=[9.91],
                           digital=[0x0001])
-                delay = -1.0
-                missed = 0
+            delay = -1.0
+            missed = 0
 
-                while delay < 0.0:
+            while delay < 0.0:
 
-                    delay = next1 - time.time()
+                delay = next1 - time.time()
 
-                    next1 += PERIOD
+                next1 += PERIOD
 
-                    missed += 1
+                missed += 1
 
-                if missed > 1:
-                    print("missed {} appointments.".format(missed - 1))
+            if missed > 1:
+                print("missed {} appointments.".format(missed - 1))
 
-                time.sleep(delay)
-            print(missed) 
+            time.sleep(delay)
 
     pmu.join()

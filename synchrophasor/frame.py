@@ -647,8 +647,8 @@ class CommonFrame(metaclass=ABCMeta):
         }
 
         if not CommonFrame._check_crc(byte_data):
-            print(byte_data)
-            print("Erro CRC -> linha 647 frame.py")
+            # print(byte_data)
+            # print("Erro CRC -> linha 647 frame.py")
             raise FrameError("CRC failed. Frame not valid.")
 
         # Get second byte and determine frame type by shifting right to get higher 4 bits
@@ -2055,36 +2055,10 @@ class DataFrame(CommonFrame):
      #   print(data_format)
         if data_format[0]:  # Polar representation
             if data_format[1]:  # Floating Point
-               # print(phasor[1])
-                
-               #lista=list(phasor)
-               #lista[1] = lista[1] - 3.142
-               #phasor=tuple(lista)
-                
-               # print('saida'+str(phasor[1]))
-               #if not -3.142 <= phasor[1] <= 3.142:
-              #      if phasor[1] >= 3.142:
-               #         print('true1')
-                #        lista=list(phasor)
-                 #       lista[1] = lista[1] - 3.142
-                  #      phasor=tuple(lista)
-                   # if phasor[1] <= -3.142:
-                   #     print('true2')
-                  #      lista=list(phasor)
-                  #      lista[1] = lista[1] + 3.142
-                  #      phasor=tuple(lista)  
-               # print(phasor)
-                 #   raise ValueError("Angle must be in range -3.14 <= ANGLE <= 3.14")
+            #   raise ValueError("Angle must be in range -3.14 <= ANGLE <= 3.14")
                 mg = pack("!f", float(phasor[0]))
-                #print(mg)
                 an = pack("!f", float(phasor[1]))
-                #print(an)
-                
-                #print(type(an))
-                #print(type(phasor[0]))
                 measurement = mg + an
-                #print(measurement)
-
             else:  # Polar 16-bit representations
 
                 if not 0 <= phasor[0] <= 65535:

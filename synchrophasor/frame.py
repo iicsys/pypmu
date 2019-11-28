@@ -2078,7 +2078,6 @@ class DataFrame(CommonFrame):
                 re = pack("!h", phasor[0])
                 im = pack("!h", phasor[1])
                 measurement = re + im
-        #print(int.from_bytes(measurement, "big", signed=False))
         return int.from_bytes(measurement, "big", signed=False)
 
 
@@ -2136,12 +2135,10 @@ class DataFrame(CommonFrame):
         if data_format[3]:  # FREQ/DFREQ floating point
             #raise ValueError("FREQ must be in range -32.767 <= FREQ <= 32.767.")
             freq = unpack("!I", pack("!f", float(freq)))[0]
-            #print(freq)
         else:
             if not -32767 <= freq <= 32767:
                 raise ValueError("FREQ must be 16-bit signed integer. -32767 <= FREQ <= 32767.")
             freq = unpack("!H", pack("!h", freq))[0]
-        #print("return %f"%freq)
         return freq
 
 
@@ -2422,8 +2419,6 @@ class DataFrame(CommonFrame):
             pmu_code = int.from_bytes(byte_data[4:6], byteorder="big", signed=False)
             soc = int.from_bytes(byte_data[6:10], byteorder="big", signed=False)
             frasec = CommonFrame._int2frasec(int.from_bytes(byte_data[10:14], byteorder="big", signed=False))
-            #print(soc)
-            #print(fracsec)
             start_byte = 14
 
             if num_pmu > 1:

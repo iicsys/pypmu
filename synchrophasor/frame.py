@@ -232,8 +232,6 @@ class CommonFrame(metaclass=ABCMeta):
             self.set_soc(soc)
         else:
             self.set_soc(int(t))  # Get current timestamp
-            #print(self.get_soc())
-            # print("Getting SOC")
         if frasec is not None:
             if isinstance(frasec, collections.Sequence):
                 self.set_frasec(*frasec)
@@ -242,7 +240,6 @@ class CommonFrame(metaclass=ABCMeta):
         else:
             # Calculate fraction of second (after decimal point) using only first 7 digits to avoid
             # overflow (24 bit number).
-            #self.set_frasec(int((((repr((t % 1))).split("."))[1][0:6]))
             self.set_frasec(int((((repr((t % 1))).split("."))[1])[0:6]))
 
     def set_soc(self, soc):
@@ -336,7 +333,7 @@ class CommonFrame(metaclass=ABCMeta):
 
         """
 
-        if not 0 <= fr_seconds <= 16777215:#8388608
+        if not 0 <= fr_seconds <= 16777215:
             raise FrameError("Frasec out of range. 0 <= FRASEC <= 16777215 ")
 
         if (not 0 <= time_quality <= 15) or (time_quality in [12, 13, 14]):
@@ -359,7 +356,6 @@ class CommonFrame(metaclass=ABCMeta):
 
         if leap_pen:  # Bit 4: Leap Second Pending - shall be 1 not more then 60s nor less than 1s before leap second.
             frasec |= 1
-            #print(frasec)
 
         frasec <<= 4  # Shift left 4 bits for message time quality
 
@@ -374,7 +370,6 @@ class CommonFrame(metaclass=ABCMeta):
         frasec |= fr_seconds  # Bits 23-0: Fraction of second.
 
         self._frasec = frasec
-        #print(frasec)
     def get_frasec(self):
 
         return self._int2frasec(self._frasec)
@@ -595,8 +590,6 @@ class CommonFrame(metaclass=ABCMeta):
     def _check_crc(byte_data):
 
         crc_calculated = crc16xmodem(byte_data[0:-2], 0xffff).to_bytes(2, "big")  # Calculate CRC
-        #print("crc calculado")
-        #print(crc_calculated)
         if byte_data[-2:] != crc_calculated:
             return False
 
@@ -636,7 +629,6 @@ class CommonFrame(metaclass=ABCMeta):
 
     @abstractmethod
     def convert2frame(byte_data, cfg=None):
-        
         convert_method = {
             0: DataFrame.convert2frame,
             1: HeaderFrame.convert2frame,
@@ -647,8 +639,6 @@ class CommonFrame(metaclass=ABCMeta):
         }
 
         if not CommonFrame._check_crc(byte_data):
-            # print(byte_data)
-            # print("Erro CRC -> linha 647 frame.py")
             raise FrameError("CRC failed. Frame not valid.")
 
         # Get second byte and determine frame type by shifting right to get higher 4 bits
@@ -2051,8 +2041,7 @@ class DataFrame(CommonFrame):
 
         if isinstance(data_format, int):
             data_format = DataFrame._int2format(data_format)
-	
-     #   print(data_format)
+
         if data_format[0]:  # Polar representation
             if data_format[1]:  # Floating Point
             #   raise ValueError("Angle must be in range -3.14 <= ANGLE <= 3.14")
@@ -2142,21 +2131,10 @@ class DataFrame(CommonFrame):
     def _freq2int(freq, data_format):
 
         if isinstance(data_format, int):
-            #print("is instance")#entraaqui
             data_format = DataFrame._int2format(data_format)
 
         if data_format[3]:  # FREQ/DFREQ floating point
-            #freq-=32.767            
-            #if not -32.767 <= freq <= 32.767:
-            #print("comeco%f"%freq)
-                #if -32.767>=freq:
-                    #print('true3')
-                 #   freq+=32.767
-                #if  freq>=32.767:
-                    #print('true4')
-                 #   freq-=32.767 
-                #print(freq)  
-                #raise ValueError("FREQ must be in range -32.767 <= FREQ <= 32.767.")
+            #raise ValueError("FREQ must be in range -32.767 <= FREQ <= 32.767.")
             freq = unpack("!I", pack("!f", float(freq)))[0]
             #print(freq)
         else:

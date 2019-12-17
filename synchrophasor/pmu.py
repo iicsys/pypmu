@@ -284,6 +284,7 @@ class Pmu(object):
             delay = -data_rate
 
         try:
+            address_list=[]
             while True:
 
                 command = None
@@ -335,10 +336,14 @@ class Pmu(object):
                         if command == "start":
                             sending_measurements_enabled = True
                             logger.debug(("[%d] - Start sending -> (%s:%d)"), pmu_id, address[0], address[1])
+                            if address not in address_list:
+                                address_list.append(address)
 
                         elif command == "stop":
                             logger.debug("[%d] - Stop sending -> (%s:%d)", pmu_id, address[0], address[1])
                             sending_measurements_enabled = False
+                            if address in address_list:
+                                address_list.pop(address)
 
                         elif command == "header":
                             if set_timestamp: header.set_time()
@@ -384,10 +389,14 @@ class Pmu(object):
                         if command == "start":
                             sending_measurements_enabled = True
                             logger.debug("[%d] - Start sending -> (%s:%d)", pmu_id, address[0], address[1])
+                            if address not in address_list:
+                                address_list.append(address)
 
                         elif command == "stop":
                             logger.debug("[%d] - Stop sending -> (%s:%d)",pmu_id, address[0], address[1])
                             sending_measurements_enabled = False
+                            if address in address_list:
+                                address_list.pop(address)
 
                         elif command == "header":
                             if set_timestamp: header.set_time()
@@ -415,7 +424,8 @@ class Pmu(object):
                             data = data.convert2bytes()
 
                         #sleep(delay)
-                        connection.sendto(data,address)
+                        for address in address_list:
+                            connection.sendto(data,address)
                         #self.logger.debug("[%d] - Message sent at [%f] -> (%s:%d)"%(pmu_id, time(), address[0], address[1]))
 
         except Exception as e:

@@ -5,7 +5,7 @@ from select import select
 from threading import Thread
 from multiprocessing import Queue
 from multiprocessing import Process
-from sys import stdout,exc_info
+from sys import stdout, exc_info
 from time import sleep
 from synchrophasor.frame import *
 from traceback import print_exception
@@ -19,9 +19,7 @@ __version__ = "1.0.0-alpha"
 
 class Pmu(object):
 
-
-
-    def __init__(self, pmu_id=7734, data_rate=30, port=4712, ip="127.0.0.1",method="tcp", buffer_size=2048, set_timestamp=True):
+    def __init__(self, pmu_id=7734, data_rate=30, port=4712, ip="127.0.0.1", method="tcp", buffer_size=2048, set_timestamp=True):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
         self.handler = logging.StreamHandler(stdout)
@@ -65,7 +63,6 @@ class Pmu(object):
         self.clients = []
         self.client_buffers = []
 
-
     def set_id(self, pmu_id):
 
         self.cfg1.set_id_code(pmu_id)
@@ -77,7 +74,6 @@ class Pmu(object):
         # self.send(self.cfg3)
 
         self.logger.info("[%d] - PMU Id changed.", self.cfg2.get_id_code())
-
 
     def set_configuration(self, config=None):
 
@@ -105,7 +101,6 @@ class Pmu(object):
 
         self.logger.info("[%d] - PMU configuration changed.", self.cfg2.get_id_code())
 
-
     def set_header(self, header=None):
 
         if isinstance(header, HeaderFrame):
@@ -120,7 +115,6 @@ class Pmu(object):
 
         self.logger.info("[%d] - PMU header changed.", self.cfg2.get_id_code())
 
-
     def set_data_rate(self, data_rate):
 
         self.cfg1.set_data_rate(data_rate)
@@ -134,7 +128,6 @@ class Pmu(object):
 
         self.logger.info("[%d] - PMU reporting data rate changed.", self.cfg2.get_id_code())
 
-
     def set_data_format(self, data_format):
 
         self.cfg1.set_data_format(data_format, self.cfg1.get_num_pmu())
@@ -147,7 +140,6 @@ class Pmu(object):
 
         self.logger.info("[%d] - PMU data format changed.", self.cfg2.get_id_code())
 
-
     def send(self, frame):
 
         if not isinstance(frame, CommonFrame) and not isinstance(frame, bytes):
@@ -156,25 +148,27 @@ class Pmu(object):
         for buffer in self.client_buffers:
             buffer.put(frame)
 
-
     def send_data(self, phasors=[], analog=[], digital=[], freq=0, dfreq=0,
                   stat=("ok", True, "timestamp", False, False, False, 0, "<10", 0), soc=None, frasec=None):
 
         # PH_UNIT conversion
         if phasors and self.cfg2.get_num_pmu() > 1:  # Check if multistreaming:
             if not (self.cfg2.get_num_pmu() == len(self.cfg2.get_data_format()) == len(phasors)):
-                raise PmuError("Incorrect input. Please provide PHASORS as list of lists with NUM_PMU elements.")
+                raise PmuError(
+                    "Incorrect input. Please provide PHASORS as list of lists with NUM_PMU elements.")
 
             for i, df in self.cfg2.get_data_format():
                 if not df[1]:  # Check if phasor representation is integer
-                    phasors[i] = map(lambda x: int(x / (0.00001 * self.cfg2.get_ph_units()[i])), phasors[i])
+                    phasors[i] = map(lambda x: int(
+                        x / (0.00001 * self.cfg2.get_ph_units()[i])), phasors[i])
         elif not self.cfg2.get_data_format()[1]:
             phasors = map(lambda x: int(x / (0.00001 * self.cfg2.get_ph_units())), phasors)
 
         # AN_UNIT conversion
         if analog and self.cfg2.get_num_pmu() > 1:  # Check if multistreaming:
             if not (self.cfg2.get_num_pmu() == len(self.cfg2.get_data_format()) == len(analog)):
-                raise PmuError("Incorrect input. Please provide analog ANALOG as list of lists with NUM_PMU elements.")
+                raise PmuError(
+                    "Incorrect input. Please provide analog ANALOG as list of lists with NUM_PMU elements.")
 
             for i, df in self.cfg2.get_data_format():
                 if not df[2]:  # Check if analog representation is integer
@@ -182,11 +176,11 @@ class Pmu(object):
         elif not self.cfg2.get_data_format()[2]:
             analog = map(lambda x: int(x / self.cfg2.get_analog_units()), analog)
 
-        data_frame = DataFrame(self.cfg2.get_id_code(), stat, phasors, freq, dfreq, analog, digital, self.cfg2)
+        data_frame = DataFrame(self.cfg2.get_id_code(), stat, phasors,
+                               freq, dfreq, analog, digital, self.cfg2)
 
         for buffer in self.client_buffers:
             buffer.put(data_frame)
-
 
     def run(self):
 
@@ -194,57 +188,62 @@ class Pmu(object):
             raise PmuError("Cannot run PMU without configuration.")
 
         # Create TCP socket, bind port and listen for incoming connections
-        if(self.method=="tcp"):
+        if(self.method == "tcp"):
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.socket.bind((self.ip, self.port))
             self.socket.listen(5)
-        if(self.method=="udp"):
+        if(self.method == "udp"):
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.socket.bind(("", self.port))
-            #self.socket.listen(5)
+            # self.socket.listen(5)
 
-        self.listener = Thread(target=self.acceptor,daemon=True,name="listenerPMUthread")  # Run acceptor thread to handle new connection
+        # Run acceptor thread to handle new connection
+        self.listener = Thread(target=self.acceptor, daemon=True, name="listenerPMUthread")
         self.listener.daemon = True
         self.listener.start()
 
-
     def acceptor(self):
-        if(self.method=="tcp"):
+        if(self.method == "tcp"):
             while True:
 
-                self.logger.info("[%d] - Waiting for connection on %s:%d", self.cfg2.get_id_code(), self.ip, self.port)
+                self.logger.info("[%d] - Waiting for connection on %s:%d",
+                                 self.cfg2.get_id_code(), self.ip, self.port)
 
                 # Accept a connection on the bound socket and fork a child process to handle it.
                 conn, address = self.socket.accept()
-                # Create Queue which will represent buffer for specific client and add it o list of all client buffers
+                # Create Queue which will represent buffer for specific client and add it
+                # to list of all client buffers
                 buffer = Queue()
                 self.client_buffers.append(buffer)
 
                 process = Process(target=self.pdc_handler, args=(conn, address, buffer, self.cfg2.get_id_code(),
                                                                  self.cfg2.get_data_rate(), self.cfg1, self.cfg2,
                                                                  self.cfg3, self.header, self.buffer_size,
-                                                                 self.set_timestamp, self.logger.level,self.method,self.logger),daemon=True,name="acceptorPMUprocess")
+                                                                 self.set_timestamp, self.logger.level, self.method, self.logger), daemon=True, name="acceptorPMUprocess")
                 process.daemon = True
                 process.start()
                 self.clients.append(process)
 
                 # Close the connection fd in the parent, since the child process has its own reference.
                 conn.close()
-        else :
-            self.logger.info("[%d] - Waiting for connection on %s:%d", self.cfg2.get_id_code(), self.ip, self.port)
+        else:
+            self.logger.info("[%d] - Waiting for connection on %s:%d",
+                             self.cfg2.get_id_code(), self.ip, self.port)
             # Accept a connection on the bound socket and fork a child process to handle it.
-            conn=self.socket
-            address="0.0.0.0"
-            # Create Queue which will represent buffer for specific client and add it o list of all client buffers
+            conn = self.socket
+            address = "0.0.0.0"
+            # Create Queue which will represent buffer for specific client and add it
+            # to list of all client buffers
             buffer = Queue()
             self.client_buffers.append(buffer)
 
             process = Process(target=self.pdc_handler, args=(conn, address, buffer, self.cfg2.get_id_code(),
                                                              self.cfg2.get_data_rate(), self.cfg1, self.cfg2,
                                                              self.cfg3, self.header, self.buffer_size,
-                                                             self.set_timestamp, self.logger.level,self.method,self.logger),daemon=True,name="acceptorPMUprocess")
+                                                             self.set_timestamp, self.logger.level, self.method, self.logger),
+                                                             daemon=True, name="acceptorPMUprocess")
             process.daemon = True
             process.start()
             self.clients.append(process)
@@ -252,16 +251,14 @@ class Pmu(object):
             # Close the connection fd in the parent, since the child process has its own reference.
             conn.close()
 
-
     def join(self):
 
         while self.listener.is_alive():
             self.listener.join(0.5)
 
-
     @staticmethod
     def pdc_handler(connection, address, buffer, pmu_id, data_rate, cfg1, cfg2, cfg3, header,
-                    buffer_size, set_timestamp, log_level,method,logger):
+                    buffer_size, set_timestamp, log_level, method, logger):
         from time import time
         # Recreate Logger (handler implemented as static method due to Windows process spawning issues)
         # if method=="tcp":
@@ -270,13 +267,13 @@ class Pmu(object):
         #     handler = logging.StreamHandler(stdout)
         #     formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
         #     handler.setFormatter(formatter)
-        #     logger.addHandler(handler)  
+        #     logger.addHandler(handler)
 
         #     logger.info("[%d] - Connection from %s:%d", pmu_id, address[0], address[1])
 
         # Wait for start command from connected PDC/PMU to start sending
         sending_measurements_enabled = False
-        currentTime=time()
+        currentTime = time()
         # Calculate delay between data frames
         if data_rate > 0:
             delay = 1.0 / data_rate
@@ -284,12 +281,13 @@ class Pmu(object):
             delay = -data_rate
 
         try:
-            address_list=[]
+            address_list = []
             while True:
 
                 command = None
                 received_data = b""
-                readable, writable, exceptional = select([connection], [], [], 0)  # Check for client commands
+                readable, writable, exceptional = select(
+                    [connection], [], [], 0)  # Check for client commands
                 import datetime
                 if readable:
                     """
@@ -297,145 +295,171 @@ class Pmu(object):
                     Should get this in first iteration. FRAMESIZE is needed to determine when one complete message
                     has been received.
                     """
-                    if(method=="tcp"):
+                    if(method == "tcp"):
                         while len(received_data) < 4:
                             received_data += connection.recv(buffer_size)
 
                         bytes_received = len(received_data)
-                        total_frame_size = int.from_bytes(received_data[2:4], byteorder="big", signed=False)
+                        total_frame_size = int.from_bytes(
+                            received_data[2:4], byteorder="big", signed=False)
 
                         # Keep receiving until every byte of that message is received
                         while bytes_received < total_frame_size:
-                            message_chunk = connection.recv(min(total_frame_size - bytes_received, buffer_size))
+                            message_chunk = connection.recv(
+                                min(total_frame_size - bytes_received, buffer_size))
                             if not message_chunk:
                                 break
                             received_data += message_chunk
                             bytes_received += len(message_chunk)
 
-                    if(method=="udp"):
-                        received_data,address=connection.recvfrom(1024)
-                        total_frame_size = int.from_bytes(received_data[2:4], byteorder="big", signed=False)
+                    if(method == "udp"):
+                        received_data, address = connection.recvfrom(1024)
+                        total_frame_size = int.from_bytes(
+                            received_data[2:4], byteorder="big", signed=False)
 
                     # If complete message is received try to decode it
                     if len(received_data) == total_frame_size:
                         try:
-                            received_message = CommonFrame.convert2frame(received_data)  # Try to decode received data
+                            received_message = CommonFrame.convert2frame(
+                                received_data)  # Try to decode received data
 
                             if isinstance(received_message, CommandFrame):
                                 command = received_message.get_command()
-                                logger.debug("[%d] INFO - Received command: [%s] <- (%s:%d)"% (pmu_id, command,address[0], address[1]))
+                                logger.debug("[%d] INFO - Received command: [%s] <- (%s:%d)" %
+                                             (pmu_id, command, address[0], address[1]))
                             else:
-                                logger.debug("[%d] - Received [%s] <- (%s:%d)"%( pmu_id,type(received_message).__name__, address[0], address[1]))
+                                logger.debug("[%d] - Received [%s] <- (%s:%d)" % (pmu_id,
+                                                                                  type(received_message).__name__, address[0], address[1]))
                         except FrameError:
-                            logger.debug(("[%d] - Received unknown message <- (%s:%d)")%(pmu_id, address[0], address[1]))
+                            logger.debug(("[%d] - Received unknown message <- (%s:%d)") %
+                                         (pmu_id, address[0], address[1]))
                     else:
-                        logger.debug(("[%d] - Message not received completely <- (%s:%d)")%(pmu_id, address[0], address[1]))
+                        logger.debug(("[%d] - Message not received completely <- (%s:%d)") %
+                                     (pmu_id, address[0], address[1]))
 
-                if(method=="tcp"):
+                if(method == "tcp"):
                     if command:
                         if command == "start":
                             sending_measurements_enabled = True
-                            logger.debug(("[%d] - Start sending -> (%s:%d)"), pmu_id, address[0], address[1])
+                            logger.debug(("[%d] - Start sending -> (%s:%d)"),
+                                         pmu_id, address[0], address[1])
                             if address not in address_list:
                                 address_list.append(address)
 
                         elif command == "stop":
-                            logger.debug("[%d] - Stop sending -> (%s:%d)", pmu_id, address[0], address[1])
+                            logger.debug("[%d] - Stop sending -> (%s:%d)",
+                                         pmu_id, address[0], address[1])
                             sending_measurements_enabled = False
                             if address in address_list:
                                 address_list.pop(address)
 
                         elif command == "header":
-                            if set_timestamp: header.set_time()
+                            if set_timestamp:
+                                header.set_time()
                             connection.sendall(header.convert2bytes())
                             logger.debug("[%d] - Requested Header frame sent -> (%s:%d)",
-                                        pmu_id, address[0], address[1])
+                                         pmu_id, address[0], address[1])
 
                         elif command == "cfg1":
-                            if set_timestamp: cfg1.set_time()
+                            if set_timestamp:
+                                cfg1.set_time()
                             connection.sendall(cfg1.convert2bytes())
                             logger.debug("[%d] - Requested Configuration frame 1 sent -> (%s:%d)",
-                                        pmu_id, address[0], address[1])
+                                         pmu_id, address[0], address[1])
 
                         elif command == "cfg2":
-                            if set_timestamp: cfg2.set_time()
+                            if set_timestamp:
+                                cfg2.set_time()
                             connection.sendall(cfg2.convert2bytes())
                             logger.debug("[%d] - Requested Configuration frame 2 sent -> (%s:%d)",
-                                        pmu_id, address[0], address[1])
+                                         pmu_id, address[0], address[1])
 
                         elif command == "cfg3":
-                            if set_timestamp: cfg3.set_time()
+                            if set_timestamp:
+                                cfg3.set_time()
                             connection.sendall(cfg3.convert2bytes())
                             logger.debug("[%d] - Requested Configuration frame 3 sent -> (%s:%d)",
-                                        pmu_id, address[0], address[1])
+                                         pmu_id, address[0], address[1])
 
                     if sending_measurements_enabled and not buffer.empty():
 
                         data = buffer.get(block=True)
-                        
+
                         if isinstance(data, CommonFrame):  # If not raw bytes convert to bytes
-                            if set_timestamp: data.set_time()
+                            if set_timestamp:
+                                data.set_time()
                             data = data.convert2bytes()
 
-                        #sleep(delay)
+                        # sleep(delay)
                         connection.sendall(data)
-                        logger.debug("[%d] - Message sent at [%f] -> (%s:%d)",pmu_id, time(), address[0], address[1])
+                        logger.debug("[%d] - Message sent at [%f] -> (%s:%d)",
+                                     pmu_id, time(), address[0], address[1])
                 else:
-                    if(time()-currentTime>=60):
-                        currentTime=time()
-                        connection.sendto(cfg2.convert2bytes(),address)
+                    if(time() - currentTime >= 60):
+                        currentTime = time()
+                        connection.sendto(cfg2.convert2bytes(), address)
                         # logger.debug(("[%d] - Requested Configuration frame 2 sent -> (%s:%d)")%(pmu_id, address[0], address[1]))
                     if command:
                         if command == "start":
                             sending_measurements_enabled = True
-                            logger.debug("[%d] - Start sending -> (%s:%d)", pmu_id, address[0], address[1])
+                            logger.debug("[%d] - Start sending -> (%s:%d)",
+                                         pmu_id, address[0], address[1])
                             if address not in address_list:
                                 address_list.append(address)
 
                         elif command == "stop":
-                            logger.debug("[%d] - Stop sending -> (%s:%d)",pmu_id, address[0], address[1])
+                            logger.debug("[%d] - Stop sending -> (%s:%d)",
+                                         pmu_id, address[0], address[1])
                             sending_measurements_enabled = False
                             if address in address_list:
                                 address_list.pop(address)
 
                         elif command == "header":
-                            if set_timestamp: header.set_time()
-                            connection.sendto(header.convert2bytes(),address)
-                            logger.debug("[%d] - Requested Header frame sent -> (%s:%d)",pmu_id, address[0], address[1])
+                            if set_timestamp:
+                                header.set_time()
+                            connection.sendto(header.convert2bytes(), address)
+                            logger.debug("[%d] - Requested Header frame sent -> (%s:%d)",
+                                         pmu_id, address[0], address[1])
 
                         elif command == "cfg1":
-                            if set_timestamp: cfg1.set_time()
-                            connection.sendto(cfg1.convert2bytes(),address)
-                            logger.debug("[%d] - Requested Configuration frame 1 sent -> (%s:%d)",pmu_id, address[0], address[1])
+                            if set_timestamp:
+                                cfg1.set_time()
+                            connection.sendto(cfg1.convert2bytes(), address)
+                            logger.debug("[%d] - Requested Configuration frame 1 sent -> (%s:%d)",
+                                         pmu_id, address[0], address[1])
 
                         elif command == "cfg2":
-                            connection.sendto(cfg2.convert2bytes(),address)
-                            logger.debug("[%d] - Requested Configuration frame 2 sent -> (%s:%d)",pmu_id, address[0], address[1])
+                            connection.sendto(cfg2.convert2bytes(), address)
+                            logger.debug("[%d] - Requested Configuration frame 2 sent -> (%s:%d)",
+                                         pmu_id, address[0], address[1])
 
                         elif command == "cfg3":
-                            if set_timestamp: cfg3.set_time()
-                            connection.sendto(cfg3.convert2bytes(),address)
-                            logger.debug("[%d] - Requested Configuration frame 3 sent -> (%s:%d)",pmu_id, address[0], address[1])
+                            if set_timestamp:
+                                cfg3.set_time()
+                            connection.sendto(cfg3.convert2bytes(), address)
+                            logger.debug("[%d] - Requested Configuration frame 3 sent -> (%s:%d)",
+                                         pmu_id, address[0], address[1])
 
-                    if sending_measurements_enabled:#and not buffer.empty():
+                    if sending_measurements_enabled:  # and not buffer.empty():
 
                         data = buffer.get(block=True)
                         if isinstance(data, CommonFrame):  # If not  raw bytes convert to bytes
                             data = data.convert2bytes()
 
-                        #sleep(delay)
+                        # sleep(delay)
                         for address in address_list:
-                            connection.sendto(data,address)
+                            connection.sendto(data, address)
                         #self.logger.debug("[%d] - Message sent at [%f] -> (%s:%d)"%(pmu_id, time(), address[0], address[1]))
 
         except Exception as e:
             print(e)
-            exc_information=exc_info()
+            exc_information = exc_info()
         finally:
             connection.close()
             logger.debug("[%d] - Connection from %s:%d has been closed.", pmu_id, address[0], address[1])
             print(print_exception(*exc_information))
             del exc_information
+
 
 class PmuError(BaseException):
     pass

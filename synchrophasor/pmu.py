@@ -349,9 +349,12 @@ class Pmu(object):
                         elif command == "stop":
                             logger.debug("[%d] - Stop sending -> (%s:%d)",
                                          pmu_id, address[0], address[1])
-                            sending_measurements_enabled = False
                             if address in address_list:
                                 address_list.pop(address)
+
+                            if len(address_list)==0:
+                                sending_measurements_enabled = False
+
 
                         elif command == "header":
                             if set_timestamp:
@@ -410,9 +413,12 @@ class Pmu(object):
                         elif command == "stop":
                             logger.debug("[%d] - Stop sending -> (%s:%d)",
                                          pmu_id, address[0], address[1])
-                            sending_measurements_enabled = False
+                            
                             if address in address_list:
                                 address_list.pop(address)
+
+                            if len(address_list)==0:
+                                sending_measurements_enabled = False
 
                         elif command == "header":
                             if set_timestamp:

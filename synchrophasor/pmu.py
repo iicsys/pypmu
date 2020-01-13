@@ -350,7 +350,7 @@ class Pmu(object):
                             logger.debug("[%d] - Stop sending -> (%s:%d)",
                                          pmu_id, address[0], address[1])
                             if address in address_list:
-                                address_list.pop(address)
+                                address_list.pop(address_list.index(address))
 
                             if len(address_list)==0:
                                 sending_measurements_enabled = False
@@ -415,7 +415,7 @@ class Pmu(object):
                                          pmu_id, address[0], address[1])
                             
                             if address in address_list:
-                                address_list.pop(address)
+                                address_list.pop(address_list.index(address))
 
                             if len(address_list)==0:
                                 sending_measurements_enabled = False

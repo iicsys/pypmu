@@ -17,6 +17,15 @@ __license__ = "BSD-3"
 __version__ = "1.0.0-alpha"
 
 
+###############################################################
+
+#  UDP connection was implemented by Yury Poledna under the supervision of 
+
+#   Prof. Eduardo Parente in R&D project supported by Brazilian electric utility 
+
+#   Companhia Paranaense  de Energia – COPEL.
+###############################################################
+
 class Pmu(object):
 
     def __init__(self, pmu_id=7734, data_rate=30, port=4712, ip="127.0.0.1", method="tcp", buffer_size=2048, set_timestamp=True):

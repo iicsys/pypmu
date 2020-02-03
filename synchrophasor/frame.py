@@ -2127,10 +2127,21 @@ class DataFrame(CommonFrame):
 
     def get_freq(self):
 
+        data_format = self.cfg._data_format
+
+        if isinstance(self.cfg._data_format, int):
+            data_format = DataFrame._int2format(self.cfg._data_format)
+
         if isinstance(self._freq, list):
             freq = [DataFrame._int2freq(fr, self.cfg._data_format[i]) for i, fr in enumerate(self._freq)]
+
+            if not data_format[3]: # FREQ/DFREQ not float => 16-bit
+                freq = [self.cfg.get_fnom()[i] + freq[i] / 1000 for i, fr in enumerate(self._freq)]
         else:
             freq = DataFrame._int2freq(self._freq, self.cfg._data_format)
+
+            if not data_format[3]: # FREQ/DFREQ not float => 16-bit
+                freq = self.cfg.get_fnom() + freq / 1000
 
         return freq
 
@@ -2141,9 +2152,6 @@ class DataFrame(CommonFrame):
             data_format = DataFrame._int2format(data_format)
 
         if data_format[3]:  # FREQ/DFREQ floating point
-            if not -32.767 <= freq <= 32.767:
-                raise ValueError("FREQ must be in range -32.767 <= FREQ <= 32.767.")
-
             freq = unpack("!I", pack("!f", float(freq)))[0]
         else:
             if not -32767 <= freq <= 32767:
@@ -2348,8 +2356,6 @@ class DataFrame(CommonFrame):
 
         if self.cfg._num_pmu > 1:
 
-            frequency = [self.cfg.get_fnom()[i] + freq / 1000 for i, freq in enumerate(self.get_freq())]
-
             for i in range(self.cfg._num_pmu):
 
                 measurement = { "stream_id": self.cfg.get_stream_id_code()[i],
@@ -2357,7 +2363,7 @@ class DataFrame(CommonFrame):
                                 "phasors": self.get_phasors()[i],
                                 "analog": self.get_analog()[i],
                                 "digital": self.get_digital()[i],
-                                "frequency": self.cfg.get_fnom()[i] + self.get_freq()[i] / 1000,
+                                "frequency": self.get_freq()[i],
                                 "rocof": self.get_dfreq()[i]}
 
                 measurements.append(measurement)
@@ -2368,7 +2374,7 @@ class DataFrame(CommonFrame):
                                   "phasors": self.get_phasors(),
                                   "analog": self.get_analog(),
                                   "digital": self.get_digital(),
-                                  "frequency": self.cfg.get_fnom() + self.get_freq() / 1000,
+                                  "frequency": self.get_freq(),
                                   "rocof": self.get_dfreq()
                                 })
 

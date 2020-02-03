@@ -2141,9 +2141,6 @@ class DataFrame(CommonFrame):
             data_format = DataFrame._int2format(data_format)
 
         if data_format[3]:  # FREQ/DFREQ floating point
-            if not -32.767 <= freq <= 32.767:
-                raise ValueError("FREQ must be in range -32.767 <= FREQ <= 32.767.")
-
             freq = unpack("!I", pack("!f", float(freq)))[0]
         else:
             if not -32767 <= freq <= 32767:

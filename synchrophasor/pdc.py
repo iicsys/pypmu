@@ -14,7 +14,7 @@ __version__ = "1.0.0-alpha"
 
 ###############################################################
 
-#  UDP connection was implemented by Yury Poledna under the supervision of 
+#  UDP connection was implemented by Yuri Poledna under the supervision of 
 
 #  Prof. Eduardo Parente in R&D project supported by Brazilian electric utility 
 

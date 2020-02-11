@@ -29,6 +29,14 @@ __credits__ = []
 __license__ = "BSD-3"
 __version__ = "1.0.0-alpha"
 
+###############################################################
+
+#  UDP connection was implemented by Yuri Poledna under the supervision of 
+
+#   Prof. Eduardo Parente in R&D project supported by Brazilian electric utility 
+
+#   Companhia Paranaense  de Energia – COPEL.
+###############################################################
 
 class CommonFrame(metaclass=ABCMeta):
     """
@@ -75,15 +83,17 @@ class CommonFrame(metaclass=ABCMeta):
         :param int version:
         :return:
         """
-
+        
         self.set_frame_type(frame_type)
         self.set_version(version)
         self.set_id_code(pmu_id_code)
-
+        
         if soc or frasec:
             self.set_time(soc, frasec)
 
 
+    def get_receivedData():
+        return self.receivedData
     def set_frame_type(self, frame_type):
         """
         ### set_frame_type() ###
@@ -133,7 +143,7 @@ class CommonFrame(metaclass=ABCMeta):
 
     def extract_frame_type(byte_data):
         """This method will only return type of the frame. It shall be used for stream splitter
-        since there is no need to create instance of specific frame which will cause lower performance."""
+        since there Phasor 5 Angle(rad):     0.6818265914916992is no need to create instance of specific frame which will cause lower performance."""
 
         # Check if frame is valid
         if not CommandFrame._check_crc(byte_data):
@@ -226,12 +236,11 @@ class CommonFrame(metaclass=ABCMeta):
 
         t = time()  # Get current timestamp
 
-        if soc:
+        if soc is not None:
             self.set_soc(soc)
         else:
             self.set_soc(int(t))  # Get current timestamp
-
-        if frasec:
+        if frasec is not None:
             if isinstance(frasec, collections.Sequence):
                 self.set_frasec(*frasec)
             else:
@@ -240,7 +249,6 @@ class CommonFrame(metaclass=ABCMeta):
             # Calculate fraction of second (after decimal point) using only first 7 digits to avoid
             # overflow (24 bit number).
             self.set_frasec(int((((repr((t % 1))).split("."))[1])[0:6]))
-
 
     def set_soc(self, soc):
         """
@@ -370,8 +378,6 @@ class CommonFrame(metaclass=ABCMeta):
         frasec |= fr_seconds  # Bits 23-0: Fraction of second.
 
         self._frasec = frasec
-
-
     def get_frasec(self):
 
         return self._int2frasec(self._frasec)
@@ -392,7 +398,7 @@ class CommonFrame(metaclass=ABCMeta):
         leap_occ = bool(leap_occ)
         leap_pen = bool(leap_pen)
 
-        fr_seconds = frasec_int & (2**23-1)
+        fr_seconds = frasec_int & (2**24-1)
 
         return fr_seconds, leap_dir, leap_occ, leap_pen, time_quality
 
@@ -592,7 +598,6 @@ class CommonFrame(metaclass=ABCMeta):
     def _check_crc(byte_data):
 
         crc_calculated = crc16xmodem(byte_data[0:-2], 0xffff).to_bytes(2, "big")  # Calculate CRC
-
         if byte_data[-2:] != crc_calculated:
             return False
 
@@ -632,7 +637,6 @@ class CommonFrame(metaclass=ABCMeta):
 
     @abstractmethod
     def convert2frame(byte_data, cfg=None):
-
         convert_method = {
             0: DataFrame.convert2frame,
             1: HeaderFrame.convert2frame,
@@ -1114,7 +1118,7 @@ class ConfigFrame1(CommonFrame):
         * ``scale`` **(int)** - scale factor.
         * ``phasor_type`` **(char)** - ``v`` - voltage, ``i`` - current.
         Default value: ``v``.
-
+phasor
         **Returns:**
 
         * ``int`` which represents phasor channels conversion factor.
@@ -1847,14 +1851,15 @@ class DataFrame(CommonFrame):
     TRIGGER_REASON_WORDS = { code: word for word, code in TRIGGER_REASON.items() }
 
 
-    def __init__(self, pmu_id_code, stat, phasors, freq, dfreq, analog, digital, cfg, soc=None, frasec=None):
+    def __init__(self, pmu_id_code, stat, phasors, freq, dfreq, analog, digital, cfg, soc=None, frasec=None,receivedData1=b'0'):
 
         if not isinstance(cfg, ConfigFrame2):
             raise FrameError("CFG should describe current data stream (ConfigurationFrame2)")
 
         # Common frame for Configuration frame 2 with PMU simulator ID CODE which sends configuration frame.
         super().__init__("data", pmu_id_code, soc, frasec)
-
+        
+        self.receivedData=receivedData1
         self.cfg = cfg
         self.set_stat(stat)
         self.set_phasors(phasors)
@@ -1864,6 +1869,8 @@ class DataFrame(CommonFrame):
         self.set_digital(digital)
 
 
+    def getReceivedData(self):
+        return self.receivedData
     def set_stat(self, stat):
 
         if self.cfg._num_pmu > 1:
@@ -2037,7 +2044,6 @@ class DataFrame(CommonFrame):
 
     @staticmethod
     def _phasor2int(phasor, data_format):
-
         if not isinstance(phasor, tuple):
             raise TypeError("Provide phasor measurement as tuple. Rectangular - (Re, Im); Polar - (Mg, An).")
 
@@ -2045,16 +2051,11 @@ class DataFrame(CommonFrame):
             data_format = DataFrame._int2format(data_format)
 
         if data_format[0]:  # Polar representation
-
             if data_format[1]:  # Floating Point
-
-                if not -3.142 <= phasor[1] <= 3.142:
-                    raise ValueError("Angle must be in range -3.14 <= ANGLE <= 3.14")
-
+            #   raise ValueError("Angle must be in range -3.14 <= ANGLE <= 3.14")
                 mg = pack("!f", float(phasor[0]))
                 an = pack("!f", float(phasor[1]))
                 measurement = mg + an
-
             else:  # Polar 16-bit representations
 
                 if not 0 <= phasor[0] <= 65535:
@@ -2085,7 +2086,6 @@ class DataFrame(CommonFrame):
                 re = pack("!h", phasor[0])
                 im = pack("!h", phasor[1])
                 measurement = re + im
-
         return int.from_bytes(measurement, "big", signed=False)
 
 
@@ -2141,15 +2141,12 @@ class DataFrame(CommonFrame):
             data_format = DataFrame._int2format(data_format)
 
         if data_format[3]:  # FREQ/DFREQ floating point
-            if not -32.767 <= freq <= 32.767:
-                raise ValueError("FREQ must be in range -32.767 <= FREQ <= 32.767.")
-
+            #raise ValueError("FREQ must be in range -32.767 <= FREQ <= 32.767.")
             freq = unpack("!I", pack("!f", float(freq)))[0]
         else:
             if not -32767 <= freq <= 32767:
                 raise ValueError("FREQ must be 16-bit signed integer. -32767 <= FREQ <= 32767.")
             freq = unpack("!H", pack("!h", freq))[0]
-
         return freq
 
 
@@ -2368,12 +2365,12 @@ class DataFrame(CommonFrame):
                                   "phasors": self.get_phasors(),
                                   "analog": self.get_analog(),
                                   "digital": self.get_digital(),
-                                  "frequency": self.cfg.get_fnom() + self.get_freq() / 1000,
+                                  #"frequency": self.cfg.get_fnom() + self.get_freq() / 1000,
+                                  "frequency": self.get_freq(),
                                   "rocof": self.get_dfreq()
                                 })
-
         data_frame = { "pmu_id": self._pmu_id_code,
-                       "time": self.get_soc() + self.get_frasec()[0] / self.cfg.get_time_base(),
+                       "time": (self.get_soc() + (self.get_frasec()[0] / self.cfg.get_time_base())),
                        "measurements": measurements }
 
         return data_frame
@@ -2414,7 +2411,8 @@ class DataFrame(CommonFrame):
 
     @staticmethod
     def convert2frame(byte_data, cfg):
-
+        
+                
         try:
 
             if not CommonFrame._check_crc(byte_data):
@@ -2429,7 +2427,6 @@ class DataFrame(CommonFrame):
             pmu_code = int.from_bytes(byte_data[4:6], byteorder="big", signed=False)
             soc = int.from_bytes(byte_data[6:10], byteorder="big", signed=False)
             frasec = CommonFrame._int2frasec(int.from_bytes(byte_data[10:14], byteorder="big", signed=False))
-
             start_byte = 14
 
             if num_pmu > 1:
@@ -2515,7 +2512,7 @@ class DataFrame(CommonFrame):
                     digital.append(dig)
                     start_byte += 2
 
-            return DataFrame(pmu_code, stat, phasors, freq, dfreq, analog, digital, cfg, soc, frasec)
+            return DataFrame(pmu_code, stat, phasors, freq, dfreq, analog, digital, cfg, soc, frasec, byte_data)
 
         except Exception as error:
             raise FrameError("Error while creating Data frame: " + str(error))

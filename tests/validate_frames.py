@@ -138,3 +138,43 @@ cf = CommandFrame(7734, "start", None, 1149591600, (770000, "+", False, False, 1
 cf_hex_result = str(binascii.hexlify(cf.convert2bytes()), "utf-8")
 
 assert cfg_hex_result == cfg_hex_string, "Command Frame Error."
+
+# test
+#
+# freq decode when in floating pt format
+# - range validation: dataframe construction success
+# - frequency decode: get measurements
+
+orig_data_format = cfg.get_data_format()
+cfg.set_data_format(12, 1) # set floating pt data format
+
+typical_freq_float_hz = 49000
+
+df = DataFrame(7734, ("ok", True, "timestamp", False, False, False, 0, "<10", 0),
+               [(14635, 0), (-7318, -12676), (-7318, 12675), (1092, 0)], typical_freq_float_hz, 0, [100, 1000, 10000],
+               [0x3c12], cfg, 1149580800, 16817)
+
+assert isinstance(df, DataFrame)
+
+measurements = df.get_measurements()
+
+assert measurements['measurements'][0]['frequency'] == typical_freq_float_hz
+
+cfg.set_data_format(orig_data_format, 1) # restoring original format
+
+# test
+#
+# fracsec decode calculation where greater than 23bits / 8.4M
+
+orig_time_base = cfg.get_time_base()
+cfg.set_time_base(1*10^7)
+
+large_fracsec = 9*10**6
+
+df = DataFrame(7734, ("ok", True, "timestamp", False, False, False, 0, "<10", 0),
+               [(14635, 0), (-7318, -12676), (-7318, 12675), (1092, 0)], 2500, 0, [100, 1000, 10000], [0x3c12], cfg,
+               1149580800, large_fracsec)
+
+assert df.get_frasec()[0] == large_fracsec
+
+cfg.set_time_base(orig_time_base) # restoring original format

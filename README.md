@@ -2,7 +2,7 @@
 
 Synchrophasor module represents implementation of IEEE C37.118.2
 standard in Python. `synchrophasor` module is still in development phase
-but we have few very interesting tools.
+but we have a few very interesting tools.
 
 ### Notes: 
 
@@ -33,7 +33,7 @@ using git `git clone https://github.com/iicsys/pypmu.git` and then run
 
 ### Running the tests ###
 
-Right now we have only one test for frame encapsulation validation. You
+Right now we only have one test for frame encapsulation validation. You
 can check it like this:
 ```
 python3 tests/validate_frames.py
@@ -42,14 +42,14 @@ python3 tests/validate_frames.py
 If ```AssertionError``` is **not** shown you're good to go!
 
 
-## Usage - What we have so far? ##
+## Usage - What do we have so far? ##
 
-Inside examples folder you will find few useful examples that utilize
+Inside examples folder you will find a few useful examples that utilize
 `synchrophasor` module.
 
 ### StreamSplitter ###
 
-Possible practical use of synchrophasor module would be data-stream
+Possible practical use of the synchrophasor module would be data-stream
 splitter. In case you need to send phasor measurements to multiple
 destinations following 4 lines of code will do it:
 
@@ -63,7 +63,7 @@ sp.run()
 
 ### TinyPMU ###
 
-With only few lines of code you can bring up PMU simulator which will
+With only few lines of code you can bring up a PMU simulator which will
 send constant phasor measurements to connected PDCs. 
 
 ```
@@ -87,8 +87,8 @@ pmu.join()
 
 ### TinyPDC ###
 
-Here's an example of very simple PDC. tinyPDC supports only one 
-connection to PMU and still cannot understand measurements or
+Here's an example of a very simple PDC. tinyPDC supports only one 
+connection to a PMU and still cannot understand measurements or
 configuration but with your help we can learn tinyPDC to read 
 Data Frames and Configuration Frames
 
@@ -136,8 +136,8 @@ you can run `splytter` application like this:
 
 ### pmy ###
 
-If you need PMU simulator for network test or something like that you
-can run `pmy` application which will send constant data frames to all
+If you need a PMU simulator for a network test or something like that you
+can run the `pmy` application which will send constant data frames to all
 connected PDCs:
 
 `
@@ -146,7 +146,7 @@ connected PDCs:
 ## We don't have it yet? :( ##
 
 Since `synchrophasor` module is in early development phase we're
-missing few very important things.
+missing a few very important things.
 
 * We don't have UDP connection supported yet but TCP looks like it's
 working as it should.

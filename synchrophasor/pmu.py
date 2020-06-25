@@ -4,7 +4,7 @@ import socket
 from select import select
 from threading import Thread
 from multiprocessing import Queue
-from multiprocessing import Process
+from multiprocessing import Process, Value
 from sys import stdout
 from time import sleep
 from synchrophasor.frame import *
@@ -66,7 +66,7 @@ class Pmu(object):
         self.method = method
         self.clients = []
         self.client_buffers = []
-
+        self.data_rate=Value('i',data_rate)
 
     def set_id(self, pmu_id):
 
@@ -98,6 +98,7 @@ class Pmu(object):
             if not self.cfg1:  # If CFG-1 not set use current data stream configuration
                 self.cfg1 = config
                 self.cfg1.__class__ = ConfigFrame1
+            self.set_data_rate(config.get_data_rate())
 
         elif type(config) == ConfigFrame3:
             self.cfg3 = ConfigFrame3
@@ -128,7 +129,7 @@ class Pmu(object):
         self.cfg1.set_data_rate(data_rate)
         self.cfg2.set_data_rate(data_rate)
         # self.cfg3.set_data_rate(data_rate)
-        self.data_rate = data_rate
+        self.data_rate.value = data_rate
 
         # Configuration changed - Notify all PDCs about new configuration
         self.send(self.cfg2)
@@ -159,8 +160,7 @@ class Pmu(object):
             buffer.put(frame)
 
 
-    def send_data(self, phasors=[], analog=[], digital=[], freq=0, dfreq=0,
-                  stat=("ok", True, "timestamp", False, False, False, 0, "<10", 0), soc=None, frasec=None):
+    def send_data(self, phasors=[], analog=[], digital=[], freq=0, dfreq=0,stat=("ok", True, "timestamp", False, False, False, 0, "<10", 0), soc=None, frasec=None):
 
         # PH_UNIT conversion
         if phasors and self.cfg2.get_num_pmu() > 1:  # Check if multistreaming:
@@ -220,7 +220,7 @@ class Pmu(object):
             self.client_buffers.append(buffer)
 
             process = Process(target=self.pdc_handler, args=(conn, address, buffer, self.cfg2.get_id_code(),
-                                                             self.cfg2.get_data_rate(), self.cfg1, self.cfg2,
+                                                             self.data_rate, self.cfg1, self.cfg2,
                                                              self.cfg3, self.header, self.buffer_size,
                                                              self.set_timestamp, self.logger.level))
             process.daemon = True
@@ -238,8 +238,7 @@ class Pmu(object):
 
 
     @staticmethod
-    def pdc_handler(connection, address, buffer, pmu_id, data_rate, cfg1, cfg2, cfg3, header,
-                    buffer_size, set_timestamp, log_level):
+    def pdc_handler(connection, address, buffer, pmu_id, data_rate, cfg1, cfg2, cfg3, header,buffer_size, set_timestamp, log_level):
 
         # Recreate Logger (handler implemented as static method due to Windows process spawning issues)
         logger = logging.getLogger(address[0]+str(address[1]))
@@ -254,11 +253,6 @@ class Pmu(object):
         # Wait for start command from connected PDC/PMU to start sending
         sending_measurements_enabled = False
 
-        # Calculate delay between data frames
-        if data_rate > 0:
-            delay = 1.0 / data_rate
-        else:
-            delay = -data_rate
 
         try:
             while True:
@@ -344,6 +338,11 @@ class Pmu(object):
                         if set_timestamp: data.set_time()
                         data = data.convert2bytes()
 
+                    # Calculate delay between data frames
+                    if data_rate.value > 0:
+                        delay = 1.0 / data_rate.value
+                    else:
+                        delay = -data_rate.value
                     sleep(delay)
                     connection.sendall(data)
                     logger.debug("[%d] - Message sent at [%f] -> (%s:%d)",

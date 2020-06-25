@@ -98,6 +98,7 @@ class Pmu(object):
             if not self.cfg1:  # If CFG-1 not set use current data stream configuration
                 self.cfg1 = config
                 self.cfg1.__class__ = ConfigFrame1
+            self.set_data_rate(config.get_data_rate())
 
         elif type(config) == ConfigFrame3:
             self.cfg3 = ConfigFrame3

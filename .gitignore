@@ -56,3 +56,4 @@ target/
 
 # config folder
 .idea/
+venv/

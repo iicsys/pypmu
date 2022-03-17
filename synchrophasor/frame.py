@@ -1965,7 +1965,7 @@ class DataFrame(CommonFrame):
         modified = bool(stat & 0x200)
 
         time_quality = DataFrame.TIME_QUALITY_WORDS[stat & 0x1c0]
-        unlocked = DataFrame.UNLOCKED_TIME_WORDS[stat & 0x30]
+        unlocked = DataFrame.UNLOCKED_TIME_WORDS[stat & 0x30 >> 4]
         trigger_reason = DataFrame.TRIGGER_REASON_WORDS[stat & 0xf]
 
         return measurement_status, sync, sorting, trigger, cfg_change, modified, time_quality, unlocked, trigger_reason

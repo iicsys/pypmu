@@ -2027,8 +2027,8 @@ class DataFrame(CommonFrame):
             phasors = [DataFrame._int2phasor(phasor, self.cfg._data_format) for phasor in self._phasors]
 
             if not self.cfg.get_data_format()[1]:  # If not float representation scale back
-                phasors = [tuple([ph*self.cfg.get_ph_units()[i][0]*0.00001 for ph in phasor]) 
-                           for i, phasor in enumerate(phasors)]
+                phasors = [tuple([ph[0]*self.cfg.get_ph_units()[i][0]*0.00001,ph[1]*180*0.0001/pi]) 
+                           for i, ph in enumerate(phasors)]
 
             if not self.cfg.get_data_format()[0]:  # If not polar convert to polar representation
                 phasors = [(sqrt(ph[0]**2 + ph[1]**2), atan2(ph[1], ph[0])) for ph in phasors]

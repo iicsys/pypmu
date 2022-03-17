@@ -17,7 +17,7 @@ import collections
 from abc import ABCMeta, abstractmethod
 from struct import pack, unpack
 from time import time
-from math import sqrt, atan2
+from math import sqrt, atan2, pi
 
 from synchrophasor.utils import crc16xmodem
 from synchrophasor.utils import list2bytes

@@ -1953,21 +1953,21 @@ class DataFrame(CommonFrame):
     @staticmethod
     def _int2stat(stat):
 
-        measurement_status = DataFrame.MEASUREMENT_STATUS_WORDS[stat >> 15]
-        sync = bool(stat & 0x2000)
+        measurement_status = DataFrame.MEASUREMENT_STATUS_WORDS[(stat >> 14) & 0b11]
+        sync = bool((stat >> 13) & 0b1)
 
-        if stat & 0x1000:
+        if (stat >> 12) & 0b1:
             sorting = "arrival"
         else:
             sorting = "timestamp"
 
-        trigger = bool(stat & 0x800)
-        cfg_change = bool(stat & 0x400)
-        modified = bool(stat & 0x200)
+        trigger = bool((stat >> 11) & 0b1)
+        cfg_change = bool((stat >> 10) & 0b1)
+        modified = bool((stat >> 9) & 0b1)
 
-        time_quality = DataFrame.TIME_QUALITY_WORDS[stat & 0x1c0]
-        unlocked = DataFrame.UNLOCKED_TIME_WORDS[stat & 0x30 >> 4]
-        trigger_reason = DataFrame.TRIGGER_REASON_WORDS[stat & 0xf]
+        time_quality = DataFrame.TIME_QUALITY_WORDS[(stat >> 6) & 0b111]
+        unlocked = DataFrame.UNLOCKED_TIME_WORDS[(stat >> 4) & 0b11]
+        trigger_reason = DataFrame.TRIGGER_REASON_WORDS[(stat >> 0) & 0b1111]
 
         return measurement_status, sync, sorting, trigger, cfg_change, modified, time_quality, unlocked, trigger_reason
 

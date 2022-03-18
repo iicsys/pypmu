@@ -15,6 +15,7 @@ Data Transfer for Power Systems.
 
 import collections
 from abc import ABCMeta, abstractmethod
+from curses import def_prog_mode
 from struct import pack, unpack
 from time import time
 from math import sqrt, atan2, pi
@@ -2192,6 +2193,8 @@ class DataFrame(CommonFrame):
             dfreq = [DataFrame._int2dfreq(dfr, self.cfg._data_format[i]) for i, dfr in enumerate(self._dfreq)]
         else:
             dfreq = DataFrame._int2dfreq(self._dfreq, self.cfg._data_format)
+
+        dfreq = dfreq / 100
 
         return dfreq
 

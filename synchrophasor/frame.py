@@ -226,12 +226,12 @@ class CommonFrame(metaclass=ABCMeta):
 
         t = time()  # Get current timestamp
 
-        if soc:
+        if soc is not None:
             self.set_soc(soc)
         else:
             self.set_soc(int(t))  # Get current timestamp
 
-        if frasec:
+        if frasec is not None:
             if isinstance(frasec, collections.Sequence):
                 self.set_frasec(*frasec)
             else:

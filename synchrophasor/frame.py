@@ -392,7 +392,7 @@ class CommonFrame(metaclass=ABCMeta):
         leap_occ = bool(leap_occ)
         leap_pen = bool(leap_pen)
 
-        fr_seconds = frasec_int & (2**23-1)
+        fr_seconds = frasec_int & (2**24-1)
 
         return fr_seconds, leap_dir, leap_occ, leap_pen, time_quality
 

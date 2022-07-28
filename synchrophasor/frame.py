@@ -1917,7 +1917,7 @@ class DataFrame(CommonFrame):
         if isinstance(trigger_reason, str):
             trigger_reason = DataFrame.TRIGGER_REASON[trigger_reason]
 
-        stat = measurement_status << 2
+        stat = measurement_status << 1
         if not sync:
             stat |= 1
 
@@ -1952,7 +1952,7 @@ class DataFrame(CommonFrame):
     @staticmethod
     def _int2stat(stat):
 
-        measurement_status = DataFrame.MEASUREMENT_STATUS_WORDS[stat >> 15]
+        measurement_status = DataFrame.MEASUREMENT_STATUS_WORDS[stat >> 14]
         sync = bool(stat & 0x2000)
 
         if stat & 0x1000:
@@ -1964,8 +1964,8 @@ class DataFrame(CommonFrame):
         cfg_change = bool(stat & 0x400)
         modified = bool(stat & 0x200)
 
-        time_quality = DataFrame.TIME_QUALITY_WORDS[stat & 0x1c0]
-        unlocked = DataFrame.UNLOCKED_TIME_WORDS[stat & 0x30]
+        time_quality = DataFrame.TIME_QUALITY_WORDS[(stat & 0x1c0) >> 6]
+        unlocked = DataFrame.UNLOCKED_TIME_WORDS[(stat & 0x30) >> 4]
         trigger_reason = DataFrame.TRIGGER_REASON_WORDS[stat & 0xf]
 
         return measurement_status, sync, sorting, trigger, cfg_change, modified, time_quality, unlocked, trigger_reason

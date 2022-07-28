@@ -2357,7 +2357,7 @@ class DataFrame(CommonFrame):
                                 "phasors": self.get_phasors()[i],
                                 "analog": self.get_analog()[i],
                                 "digital": self.get_digital()[i],
-                                "frequency": (self.get_freq()[i] / 1000) if (self.cfg.get_data_format()[i])[3] else self.cfg.get_fnom()[i] + self.get_freq()[i] / 1000,
+                                "frequency": self.cfg.get_fnom()[i] + self.get_freq()[i] / 1000,
                                 "rocof": self.get_dfreq()[i]}
 
                 measurements.append(measurement)
@@ -2368,7 +2368,7 @@ class DataFrame(CommonFrame):
                                   "phasors": self.get_phasors(),
                                   "analog": self.get_analog(),
                                   "digital": self.get_digital(),
-                                  "frequency": (self.get_freq() / 1000) if (self.cfg.get_data_format())[3] else self.cfg.get_fnom() + self.get_freq() / 1000,
+                                  "frequency": self.cfg.get_fnom() + self.get_freq() / 1000,
                                   "rocof": self.get_dfreq()
                                 })
 

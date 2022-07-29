@@ -23,7 +23,7 @@ if __name__ == "__main__":
                        1,  # Number of PMUs included in data frame
                        "Random Station",  # Station name
                        5080,  # Data-stream ID(s)
-                       (True, True, True, False),  # Data format - POLAR; PH - REAL; AN - REAL; FREQ - REAL;
+                       (True, True, True, True),  # Data format - POLAR; PH - REAL; AN - REAL; FREQ - REAL;
                        3,  # Number of phasors
                        1,  # Number of analog values
                        1,  # Number of digital status words

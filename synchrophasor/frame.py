@@ -2140,13 +2140,13 @@ class DataFrame(CommonFrame):
         if isinstance(data_format, int):
             data_format = DataFrame._int2format(data_format)
 
-        if data_format[3]:  # FREQ/DFREQ floating point
-            if not -32.767 <= freq <= 32.767:
-                raise ValueError("FREQ must be in range -32.767 <= FREQ <= 32.767.")
+        if data_format[3]:  # FREQ/DFREQ floating point, actual frequency value, input in Hz.
+            if not -32767 <= freq <= 32767:
+                raise ValueError("FREQ must be in range -32767 <= FREQ <= 32767.")
 
             freq = unpack("!I", pack("!f", float(freq)))[0]
         else:
-            if not -32767 <= freq <= 32767:
+            if not -32767 <= freq <= 32767: #FREQ 16-bit integer, should be frequency deviation from nominal(mHz). It is divided by 1000 and added to FNOM.
                 raise ValueError("FREQ must be 16-bit signed integer. -32767 <= FREQ <= 32767.")
             freq = unpack("!H", pack("!h", freq))[0]
 

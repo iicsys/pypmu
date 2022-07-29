@@ -226,7 +226,7 @@ class CommonFrame(metaclass=ABCMeta):
 
         t = time()  # Get current timestamp
 
-         if soc is not None:
+        if soc is not None:
             self.set_soc(soc)
         else:
             self.set_soc(int(t))  # Get current timestamp

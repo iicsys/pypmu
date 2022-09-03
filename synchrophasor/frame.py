@@ -226,12 +226,12 @@ class CommonFrame(metaclass=ABCMeta):
 
         t = time()  # Get current timestamp
 
-        if soc:
+        if soc is not None:
             self.set_soc(soc)
         else:
             self.set_soc(int(t))  # Get current timestamp
 
-        if frasec:
+        if frasec is not None:
             if isinstance(frasec, collections.Sequence):
                 self.set_frasec(*frasec)
             else:
@@ -392,7 +392,7 @@ class CommonFrame(metaclass=ABCMeta):
         leap_occ = bool(leap_occ)
         leap_pen = bool(leap_pen)
 
-        fr_seconds = frasec_int & (2**23-1)
+        fr_seconds = frasec_int & (2**24-1)
 
         return fr_seconds, leap_dir, leap_occ, leap_pen, time_quality
 
@@ -1917,7 +1917,7 @@ class DataFrame(CommonFrame):
         if isinstance(trigger_reason, str):
             trigger_reason = DataFrame.TRIGGER_REASON[trigger_reason]
 
-        stat = measurement_status << 2
+        stat = measurement_status << 1
         if not sync:
             stat |= 1
 
@@ -1952,7 +1952,7 @@ class DataFrame(CommonFrame):
     @staticmethod
     def _int2stat(stat):
 
-        measurement_status = DataFrame.MEASUREMENT_STATUS_WORDS[stat >> 15]
+        measurement_status = DataFrame.MEASUREMENT_STATUS_WORDS[stat >> 14]
         sync = bool(stat & 0x2000)
 
         if stat & 0x1000:
@@ -1964,8 +1964,8 @@ class DataFrame(CommonFrame):
         cfg_change = bool(stat & 0x400)
         modified = bool(stat & 0x200)
 
-        time_quality = DataFrame.TIME_QUALITY_WORDS[stat & 0x1c0]
-        unlocked = DataFrame.UNLOCKED_TIME_WORDS[stat & 0x30]
+        time_quality = DataFrame.TIME_QUALITY_WORDS[(stat & 0x1c0) >> 6]
+        unlocked = DataFrame.UNLOCKED_TIME_WORDS[(stat & 0x30) >> 4]
         trigger_reason = DataFrame.TRIGGER_REASON_WORDS[stat & 0xf]
 
         return measurement_status, sync, sorting, trigger, cfg_change, modified, time_quality, unlocked, trigger_reason
@@ -2140,13 +2140,13 @@ class DataFrame(CommonFrame):
         if isinstance(data_format, int):
             data_format = DataFrame._int2format(data_format)
 
-        if data_format[3]:  # FREQ/DFREQ floating point
-            if not -32.767 <= freq <= 32.767:
-                raise ValueError("FREQ must be in range -32.767 <= FREQ <= 32.767.")
+        if data_format[3]:  # FREQ/DFREQ floating point, actual frequency value, input in Hz.
+            if not -32767 <= freq <= 32767:
+                raise ValueError("FREQ must be in range -32767 <= FREQ <= 32767.")
 
             freq = unpack("!I", pack("!f", float(freq)))[0]
         else:
-            if not -32767 <= freq <= 32767:
+            if not -32767 <= freq <= 32767: #FREQ 16-bit integer, should be frequency deviation from nominal(mHz). It is divided by 1000 and added to FNOM.
                 raise ValueError("FREQ must be 16-bit signed integer. -32767 <= FREQ <= 32767.")
             freq = unpack("!H", pack("!h", freq))[0]
 
@@ -2357,7 +2357,7 @@ class DataFrame(CommonFrame):
                                 "phasors": self.get_phasors()[i],
                                 "analog": self.get_analog()[i],
                                 "digital": self.get_digital()[i],
-                                "frequency": self.cfg.get_fnom()[i] + self.get_freq()[i] / 1000,
+                                "frequency": (self.get_freq()[i]) if (self.cfg.get_data_format()[i])[3] else self.cfg.get_fnom()[i] + self.get_freq()[i] / 1000,
                                 "rocof": self.get_dfreq()[i]}
 
                 measurements.append(measurement)
@@ -2368,7 +2368,7 @@ class DataFrame(CommonFrame):
                                   "phasors": self.get_phasors(),
                                   "analog": self.get_analog(),
                                   "digital": self.get_digital(),
-                                  "frequency": self.cfg.get_fnom() + self.get_freq() / 1000,
+                                  "frequency": (self.get_freq()) if (self.cfg.get_data_format())[3] else self.cfg.get_fnom() + self.get_freq() / 1000,
                                   "rocof": self.get_dfreq()
                                 })
 

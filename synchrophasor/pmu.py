@@ -167,7 +167,7 @@ class Pmu(object):
             if not (self.cfg2.get_num_pmu() == len(self.cfg2.get_data_format()) == len(phasors)):
                 raise PmuError("Incorrect input. Please provide PHASORS as list of lists with NUM_PMU elements.")
 
-            for i, df in self.cfg2.get_data_format():
+            for i, df in enumerate(self.cfg2.get_data_format()):
                 if not df[1]:  # Check if phasor representation is integer
                     phasors[i] = map(lambda x: int(x / (0.00001 * self.cfg2.get_ph_units()[i])), phasors[i])
         elif not self.cfg2.get_data_format()[1]:
@@ -178,7 +178,7 @@ class Pmu(object):
             if not (self.cfg2.get_num_pmu() == len(self.cfg2.get_data_format()) == len(analog)):
                 raise PmuError("Incorrect input. Please provide analog ANALOG as list of lists with NUM_PMU elements.")
 
-            for i, df in self.cfg2.get_data_format():
+            for i, df in enumerate(self.cfg2.get_data_format()):
                 if not df[2]:  # Check if analog representation is integer
                     analog[i] = map(lambda x: int(x / self.cfg2.get_analog_units()[i]), analog[i])
         elif not self.cfg2.get_data_format()[2]:

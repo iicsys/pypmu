@@ -1,5 +1,6 @@
 import logging
 import socket
+import socks
 from sys import stdout
 from synchrophasor.frame import *
 
@@ -21,7 +22,6 @@ class Pdc(object):
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
-
     def __init__(self, pdc_id=1, pmu_ip="127.0.0.1", pmu_port=4712, buffer_size=2048, method="tcp"):
 
         self.pdc_id = pdc_id
@@ -31,27 +31,25 @@ class Pdc(object):
         self.pmu_ip = pmu_ip
         self.pmu_port = pmu_port
         self.pmu_address = (pmu_ip, pmu_port)
-        self.pmu_socket = None
+        self.pmu_socket = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
         self.pmu_cfg1 = None
         self.pmu_cfg2 = None
         self.pmu_header = None
 
+    def set_proxy(self, proxy_ip: str, proxy_port: str) -> None:
+        self.pmu_socket.set_proxy(socks.SOCKS5, proxy_ip, proxy_port)
+        self.logger.info("[%d] - Socks5 proxy set to (%s:%d)", self.pdc_id, proxy_ip, proxy_port)
 
-    def run(self):
-
-        if self.pmu_socket:
-            self.logger.info("[%d] - PDC already connected to PMU (%s:%d)", self.pdc_id, self.pmu_ip, self.pmu_port)
-        else:
-            try:
-                # Connect to PMU
-                self.pmu_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.pmu_socket.connect(self.pmu_address)
-                self.logger.info("[%d] - PDC successfully connected to PMU (%s:%d)",
-                                 self.pdc_id, self.pmu_ip, self.pmu_port)
-            except Exception as e:
-                self.logger.error("[%d] - Error while connecting to (%s:%d)", self.pdc_id, self.pmu_ip, self.pmu_port)
-                self.logger.error(str(e))
-
+    def connect(self) -> None:
+        try:
+            # Connect to PMU
+            self.pmu_socket = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
+            self.pmu_socket.connect(self.pmu_address)
+            self.logger.info("[%d] - PDC successfully connected to PMU (%s:%d)",
+                             self.pdc_id, self.pmu_ip, self.pmu_port)
+        except Exception as e:
+            self.logger.error("[%d] - Error while connecting to (%s:%d)", self.pdc_id, self.pmu_ip, self.pmu_port)
+            self.logger.error(str(e))
 
     def start(self):
         """
@@ -62,7 +60,6 @@ class Pdc(object):
         self.pmu_socket.sendall(start.convert2bytes())
         self.logger.info("[%d] - Requesting to start sending from PMU (%s:%d)", self.pdc_id, self.pmu_ip, self.pmu_port)
 
-
     def stop(self):
         """
         Request from PMU to start sending data
@@ -71,7 +68,6 @@ class Pdc(object):
         start = CommandFrame(self.pdc_id, "stop")
         self.pmu_socket.sendall(start.convert2bytes())
         self.logger.info("[%d] - Requesting to stop sending from PMU (%s:%d)", self.pdc_id, self.pmu_ip, self.pmu_port)
-
 
     def get_header(self):
         """
@@ -88,7 +84,6 @@ class Pdc(object):
             return header
         else:
             raise PdcError("Invalid Header message received")
-
 
     def get_config(self, version="cfg2"):
         """
@@ -108,7 +103,6 @@ class Pdc(object):
             raise PdcError("Invalid Configuration message received")
 
         return config
-
 
     def get(self):
         """
@@ -150,7 +144,6 @@ class Pdc(object):
                                     self.pdc_id, self.pmu_ip, self.pmu_port)
 
         return received_message
-
 
     def quit(self):
         """

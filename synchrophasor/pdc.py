@@ -43,7 +43,6 @@ class Pdc(object):
     def connect(self) -> None:
         try:
             # Connect to PMU
-            self.pmu_socket = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
             self.pmu_socket.connect(self.pmu_address)
             self.logger.info("[%d] - PDC successfully connected to PMU (%s:%d)",
                              self.pdc_id, self.pmu_ip, self.pmu_port)

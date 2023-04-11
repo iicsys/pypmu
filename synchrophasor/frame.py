@@ -15,7 +15,6 @@ Data Transfer for Power Systems.
 
 import collections
 from abc import ABCMeta, abstractmethod
-from curses import def_prog_mode
 from struct import pack, unpack
 from time import time
 from math import sqrt, atan2, pi

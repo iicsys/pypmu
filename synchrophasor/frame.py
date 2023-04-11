@@ -17,7 +17,7 @@ import collections
 from abc import ABCMeta, abstractmethod
 from struct import pack, unpack
 from time import time
-from math import sqrt, atan2
+from math import sqrt, atan2, pi
 
 from synchrophasor.utils import crc16xmodem
 from synchrophasor.utils import list2bytes
@@ -1952,21 +1952,21 @@ class DataFrame(CommonFrame):
     @staticmethod
     def _int2stat(stat):
 
-        measurement_status = DataFrame.MEASUREMENT_STATUS_WORDS[stat >> 15]
-        sync = bool(stat & 0x2000)
+        measurement_status = DataFrame.MEASUREMENT_STATUS_WORDS[(stat >> 14) & 0b11]
+        sync = bool((stat >> 13) & 0b1)
 
-        if stat & 0x1000:
+        if (stat >> 12) & 0b1:
             sorting = "arrival"
         else:
             sorting = "timestamp"
 
-        trigger = bool(stat & 0x800)
-        cfg_change = bool(stat & 0x400)
-        modified = bool(stat & 0x200)
+        trigger = bool((stat >> 11) & 0b1)
+        cfg_change = bool((stat >> 10) & 0b1)
+        modified = bool((stat >> 9) & 0b1)
 
-        time_quality = DataFrame.TIME_QUALITY_WORDS[stat & 0x1c0]
-        unlocked = DataFrame.UNLOCKED_TIME_WORDS[stat & 0x30]
-        trigger_reason = DataFrame.TRIGGER_REASON_WORDS[stat & 0xf]
+        time_quality = DataFrame.TIME_QUALITY_WORDS[(stat >> 6) & 0b111]
+        unlocked = DataFrame.UNLOCKED_TIME_WORDS[(stat >> 4) & 0b11]
+        trigger_reason = DataFrame.TRIGGER_REASON_WORDS[(stat >> 0) & 0b1111]
 
         return measurement_status, sync, sorting, trigger, cfg_change, modified, time_quality, unlocked, trigger_reason
 
@@ -2027,8 +2027,8 @@ class DataFrame(CommonFrame):
             phasors = [DataFrame._int2phasor(phasor, self.cfg._data_format) for phasor in self._phasors]
 
             if not self.cfg.get_data_format()[1]:  # If not float representation scale back
-                phasors = [tuple([ph*self.cfg.get_ph_units()[i][0]*0.00001 for ph in phasor]) 
-                           for i, phasor in enumerate(phasors)]
+                phasors = [tuple([ph[0]*self.cfg.get_ph_units()[i][0]*0.00001,ph[1]*180*0.0001/pi]) 
+                           for i, ph in enumerate(phasors)]
 
             if not self.cfg.get_data_format()[0]:  # If not polar convert to polar representation
                 phasors = [(sqrt(ph[0]**2 + ph[1]**2), atan2(ph[1], ph[0])) for ph in phasors]
@@ -2200,6 +2200,8 @@ class DataFrame(CommonFrame):
             dfreq = [DataFrame._int2dfreq(dfr, self.cfg._data_format[i]) for i, dfr in enumerate(self._dfreq)]
         else:
             dfreq = DataFrame._int2dfreq(self._dfreq, self.cfg._data_format)
+
+        dfreq = dfreq / 100
 
         return dfreq
 

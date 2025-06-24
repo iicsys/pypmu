@@ -12,7 +12,7 @@ Data Transfer for Power Systems.
 * Header Frames.
 
 """
-
+import base64
 import collections
 from abc import ABCMeta, abstractmethod
 from struct import pack, unpack
@@ -80,8 +80,8 @@ class CommonFrame(metaclass=ABCMeta):
         self.set_version(version)
         self.set_id_code(pmu_id_code)
 
-        if soc or frasec:
-            self.set_time(soc, frasec)
+        #if soc or frasec:
+        self.set_time(soc, frasec)
 
 
     def set_frame_type(self, frame_type):
@@ -232,7 +232,7 @@ class CommonFrame(metaclass=ABCMeta):
             self.set_soc(int(t))  # Get current timestamp
 
         if frasec:
-            if isinstance(frasec, collections.Sequence):
+            if isinstance(frasec, collections.abc.Sequence):
                 self.set_frasec(*frasec)
             else:
                 self.set_frasec(frasec)  # Just set fraction of second and use default values for other arguments.
@@ -605,6 +605,7 @@ class CommonFrame(metaclass=ABCMeta):
         # SYNC word in CommonFrame starting with AA hex word + frame type + version
         sync_b = (0xaa << 8) | (self._frame_type << 4) | self._version
         sync_b = sync_b.to_bytes(2, "big")
+
 
         # FRAMESIZE: 2B SYNC + 2B FRAMESIZE + 2B IDCODE + 4B SOC + 4B FRASEC + len(Command) + 2B CHK
         frame_size_b = (16 + len(byte_message)).to_bytes(2, "big")
@@ -1541,15 +1542,23 @@ class ConfigFrame1(CommonFrame):
     def convert2bytes(self):
 
         if not self._multistreaming:
-
-            cfg_b = self._time_base.to_bytes(4, "big") + self._num_pmu.to_bytes(2, "big") + \
-                    str.encode(self._station_name) + self._id_code.to_bytes(2, "big") + \
-                    self._data_format.to_bytes(2, "big") + self._phasor_num.to_bytes(2, "big") + \
-                    self._analog_num.to_bytes(2, "big") + self._digital_num.to_bytes(2, "big") + \
-                    str.encode("".join(self._channel_names)) + list2bytes(self._ph_units, 4) + \
-                    list2bytes(self._an_units, 4) + list2bytes(self._dig_units, 4) + \
-                    self._f_nom.to_bytes(2, "big") + self._cfg_count.to_bytes(2, "big") + \
-                    self._data_rate.to_bytes(2, "big", signed=True)
+            cfg_b = (
+                    self._time_base.to_bytes(4, "big") +
+                     self._num_pmu.to_bytes(2, "big") +
+                     str.encode(self._station_name) +
+                      self._id_code.to_bytes(2, "big") +
+                      self._data_format.to_bytes(2, "big") +
+                      self._phasor_num.to_bytes(2, "big") +
+                      self._analog_num.to_bytes(2, "big") +
+                      self._digital_num.to_bytes(2, "big") +
+                      str.encode("".join(self._channel_names)) +
+                      list2bytes(self._ph_units, 4) +
+                      list2bytes(self._an_units, 4) +
+                      list2bytes(self._dig_units, 4) +
+                      self._f_nom.to_bytes(2, "big") +
+                      self._cfg_count.to_bytes(2, "big") +
+                     self._data_rate.to_bytes(2, "big", signed=True)
+                     )
         else:
 
             cfg_b = self._time_base.to_bytes(4, "big") + self._num_pmu.to_bytes(2, "big")
@@ -2134,20 +2143,18 @@ class DataFrame(CommonFrame):
 
         return freq
 
-
     def _freq2int(freq, data_format):
 
         if isinstance(data_format, int):
             data_format = DataFrame._int2format(data_format)
 
         if data_format[3]:  # FREQ/DFREQ floating point
-            if not -32.767 <= freq <= 32.767:
-                raise ValueError("FREQ must be in range -32.767 <= FREQ <= 32.767.")
-
+            if abs(float(freq)) > 2147483647.0:
+                raise ValueError("float FREQ must be packable into 32 bits. -2147483647 <= FREQ <= 2147483647.")
             freq = unpack("!I", pack("!f", float(freq)))[0]
         else:
             if not -32767 <= freq <= 32767:
-                raise ValueError("FREQ must be 16-bit signed integer. -32767 <= FREQ <= 32767.")
+                raise ValueError("integer FREQ must be packable into 16-bits. -32767 <= FREQ <= 32767.")
             freq = unpack("!H", pack("!h", freq))[0]
 
         return freq

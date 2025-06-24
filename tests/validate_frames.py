@@ -23,7 +23,7 @@ cfg_hex_string = "aa3101c61e36448527f056071098000f4240000153746174696f6e20412020
                  "20535441545553425245414b4552204420535441545553425245414b4552204520535441545553425245414b4552204620" \
                  "535441545553425245414b4552204720535441545553000df847000df847000df8470100b2d00000000101000001020000" \
                  "010000ffff00000016001ed5d1"
-
+#channel_names.append(byte_data[start_byte:start_byte+16].decode("ascii"))
 cfg = ConfigFrame2(7734, 1000000, 1, "Station A", 7734, (False, False, True, False), 4, 3, 1,
                    ["VA", "VB", "VC", "I1", "ANALOG1", "ANALOG2", "ANALOG3", "BREAKER 1 STATUS",
                     "BREAKER 2 STATUS", "BREAKER 3 STATUS", "BREAKER 4 STATUS", "BREAKER 5 STATUS",
@@ -79,7 +79,7 @@ cfgm = ConfigFrame2(7734, 1000000, 2, ["Station A", "Station A"], [7734, 7734], 
                      [(915527, "v"), (915527, "v"), (915527, "v"), (45776, "i")]],
                     [[(1, "pow"), (1, "rms"), (1, "peak")], [(1, "pow"), (1, "rms"), (1, "peak")]],
                     [[(0x0000, 0xffff)], [(0x0000, 0xffff)]], [60, 60], [22, 22], 30,
-                    1149577200, (463000, "-", False, True, 6))
+                    1149577200, (463000, "-", False, False, 6))
 
 # cfgm.set_soc(1149577200)
 # cfgm.set_frasec(463000, "-", False, True, 6)

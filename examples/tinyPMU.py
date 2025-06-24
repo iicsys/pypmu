@@ -11,7 +11,7 @@ be sent.
 
 if __name__ == "__main__":
 
-    pmu = Pmu(ip="127.0.0.1", port=1410)
+    pmu = Pmu(ip="127.0.0.1", port=4712)
     pmu.logger.setLevel("DEBUG")
 
     pmu.set_configuration()  # This will load default PMU configuration specified in IEEE C37.118.2 - Annex D (Table D.2)

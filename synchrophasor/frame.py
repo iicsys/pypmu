@@ -232,7 +232,7 @@ class CommonFrame(metaclass=ABCMeta):
             self.set_soc(int(t))  # Get current timestamp
 
         if frasec:
-            if isinstance(frasec, collections.Sequence):
+            if isinstance(frasec, collections.abc.Sequence):
                 self.set_frasec(*frasec)
             else:
                 self.set_frasec(frasec)  # Just set fraction of second and use default values for other arguments.
